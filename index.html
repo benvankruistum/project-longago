@@ -676,13 +676,110 @@
 
         .setting-label { font-weight: 500; }
         .setting-desc { font-size: 0.8em; color: #999; margin-top: 2px; }
+
+        /* ===== SEARCHABLE SELECT ===== */
+        .search-select {
+            position: relative;
+        }
+
+        .search-select-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            background: #fafafa;
+            -webkit-appearance: none;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .search-select-input:focus {
+            outline: none;
+            border-color: var(--accent2);
+            background: white;
+        }
+
+        .search-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--accent2);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 220;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .search-select-dropdown.open { display: block; }
+
+        .search-select-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.1s;
+        }
+
+        .search-select-option:active,
+        .search-select-option:hover { background: #f0f4ff; }
+
+        .search-select-option .opt-code {
+            font-weight: 700;
+            color: var(--accent2);
+            margin-right: 6px;
+        }
+
+        .search-select-option .opt-label { color: var(--text); }
+
+        .search-select-option.section {
+            background: #f8f9fa;
+            font-weight: 700;
+            font-size: 0.85em;
+            color: #666;
+            pointer-events: none;
+        }
+
+        /* Company profile card */
+        .company-header {
+            background: var(--dark);
+            color: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .company-header h2 { font-size: 1.2em; margin-bottom: 4px; }
+        .company-header .company-meta { font-size: 0.8em; opacity: 0.7; }
+
+        /* Cost summary */
+        .cost-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+
+        .cost-bar .cost-label { color: #888; }
+        .cost-bar .cost-value { font-weight: 700; }
     </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <div class="topbar">
-    <h1>Wie Zit Waar?</h1>
+    <h1 id="topbar-title" onclick="switchView('settings')" style="cursor:pointer;">Wie Zit Waar?</h1>
     <div class="score-pills">
         <div class="pill" id="pill-score">&#x2B50; <span id="score-val">0</span></div>
         <div class="pill" id="pill-fill">&#x1F4CA; <span id="fill-val">0%</span></div>
@@ -711,7 +808,57 @@
 
     <!-- === INSTELLINGEN View === -->
     <div class="view" id="view-settings">
-        <h2 style="margin-bottom:16px;">Instellingen</h2>
+        <h2 style="margin-bottom:16px;">Bedrijfsprofiel & Instellingen</h2>
+
+        <div class="card"><div class="card-body">
+            <div class="form-group">
+                <label>Bedrijfsnaam</label>
+                <input type="text" id="company-name" placeholder="Mijn Bedrijf B.V." oninput="saveCompanyProfile()">
+            </div>
+            <div class="form-group">
+                <label>SBI Branchecode</label>
+                <div class="search-select" id="sbi-search">
+                    <input type="text" class="search-select-input" id="sbi-input"
+                           placeholder="Zoek op code of naam..."
+                           onfocus="openSBIDropdown()" oninput="filterSBI()">
+                    <div class="search-select-dropdown" id="sbi-dropdown"></div>
+                </div>
+                <div id="sbi-selected" style="margin-top:6px;font-size:0.85em;color:var(--accent2);"></div>
+            </div>
+            <div class="form-group">
+                <label>Type bedrijf</label>
+                <select id="company-type" onchange="saveCompanyProfile()">
+                    <option value="">-- Kies --</option>
+                    <option value="eenmanszaak">Eenmanszaak</option>
+                    <option value="vof">VOF</option>
+                    <option value="bv">B.V.</option>
+                    <option value="nv">N.V.</option>
+                    <option value="stichting">Stichting</option>
+                    <option value="cooperatie">Coöperatie</option>
+                    <option value="maatschap">Maatschap</option>
+                    <option value="zzp">ZZP</option>
+                </select>
+            </div>
+            <div id="salary-indicator" style="display:none;">
+                <label style="display:block;font-size:0.8em;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Salarisindicatie sector</label>
+                <div class="cost-bar">
+                    <span class="cost-label">Gem. bruto jaarsalaris</span>
+                    <span class="cost-value" id="sector-salary">-</span>
+                </div>
+                <div class="cost-bar" style="margin-top:4px;">
+                    <span class="cost-label">Geschatte loonkosten/FTE</span>
+                    <span class="cost-value" id="sector-cost">-</span>
+                </div>
+                <div style="font-size:0.7em;color:#aaa;margin-top:4px;">Incl. ~30% werkgeverslasten. Bron: CBS/sectorgemiddelden.</div>
+            </div>
+        </div></div>
+
+        <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">Personeelskosten overzicht</h3>
+        <div class="card"><div class="card-body" id="cost-overview">
+            <p style="color:#aaa;font-size:0.9em;">Selecteer een branchecode om kostenindicaties te zien.</p>
+        </div></div>
+
+        <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">Data</h3>
         <div class="card"><div class="card-body">
             <div class="setting-row">
                 <div>
@@ -786,8 +933,14 @@
 let state = {
     employees: [],
     departments: [],
-    allocations: [],    // { empId, deptId, fte }
+    allocations: [],    // { empId, deptId, fte, asRole }
     deptOrder: [],      // ordered dept ids for canvas
+    company: {          // company profile
+        name: '',
+        sbiCode: '',
+        sbiLabel: '',
+        type: ''
+    },
     nextEmpId: 1,
     nextDeptId: 1
 };
@@ -833,6 +986,10 @@ function switchView(view) {
     });
     updateFab();
     renderView();
+    if (view === 'settings') {
+        loadCompanyProfile();
+        updateCostOverview();
+    }
 }
 
 function fabAction() {
@@ -889,6 +1046,7 @@ function renderView() {
 function renderAll() {
     renderView();
     updateScores();
+    if (currentView === 'settings') updateCostOverview();
 }
 
 // ===== CANVAS / OVERZICHT =====
@@ -971,6 +1129,15 @@ function renderCanvas() {
                     <span>Max: ${dept.maxFte}</span>
                 </div>
                 ${rolesHTML ? `<div class="badges-row">${rolesHTML}</div>` : ''}
+                ${state.company && state.company.sbiCode ? (() => {
+                    const sec = getSBISection(state.company.sbiCode);
+                    const costPerFte = Math.round((SECTOR_SALARIES[sec] || 40000) * EMPLOYER_COST_FACTOR);
+                    const deptCost = Math.round(filled * costPerFte);
+                    return `<div class="cost-bar" style="margin-top:8px;font-size:0.8em;">
+                        <span class="cost-label">Kosten</span>
+                        <span class="cost-value" style="color:var(--accent2);">€ ${deptCost.toLocaleString('nl-NL')}/jr</span>
+                    </div>`;
+                })() : ''}
                 <div class="canvas-poppetjes">${poppetjesHTML}</div>
             </div>
         </div>`;
@@ -1730,9 +1897,309 @@ function loadDemo() {
     toast('Demo data geladen!', 'success');
 }
 
+// ===== SBI BRANCHECODES =====
+const SBI_DATA = [
+    { code:'A', label:'Landbouw, bosbouw en visserij', section:true },
+    { code:'01', label:'Teelt van gewassen, veeteelt, jacht' },
+    { code:'02', label:'Bosbouw en houtoogst' },
+    { code:'03', label:'Visserij en aquacultuur' },
+    { code:'B', label:'Winning van delfstoffen', section:true },
+    { code:'06', label:'Winning van aardolie en aardgas' },
+    { code:'08', label:'Winning van delfstoffen (overig)' },
+    { code:'C', label:'Industrie', section:true },
+    { code:'10', label:'Vervaardiging van voedingsmiddelen' },
+    { code:'11', label:'Vervaardiging van dranken' },
+    { code:'13', label:'Vervaardiging van textiel' },
+    { code:'14', label:'Vervaardiging van kleding' },
+    { code:'16', label:'Houtindustrie' },
+    { code:'17', label:'Vervaardiging van papier en karton' },
+    { code:'18', label:'Drukkerijen en reproductie' },
+    { code:'20', label:'Vervaardiging van chemische producten' },
+    { code:'21', label:'Vervaardiging van farmaceutische producten' },
+    { code:'22', label:'Vervaardiging van rubber- en kunststofproducten' },
+    { code:'23', label:'Vervaardiging van overige niet-metaalhoudende minerale producten' },
+    { code:'24', label:'Vervaardiging van metalen in primaire vorm' },
+    { code:'25', label:'Vervaardiging van producten van metaal' },
+    { code:'26', label:'Vervaardiging van computers en elektronische apparatuur' },
+    { code:'27', label:'Vervaardiging van elektrische apparatuur' },
+    { code:'28', label:'Vervaardiging van machines en apparaten' },
+    { code:'29', label:'Vervaardiging van auto\'s en aanhangwagens' },
+    { code:'30', label:'Vervaardiging van overige transportmiddelen' },
+    { code:'31', label:'Vervaardiging van meubels' },
+    { code:'32', label:'Overige industrie' },
+    { code:'33', label:'Reparatie en installatie van machines' },
+    { code:'D', label:'Energievoorziening', section:true },
+    { code:'35', label:'Productie en distributie van elektriciteit, gas en warmte' },
+    { code:'E', label:'Waterbedrijven en afvalbeheer', section:true },
+    { code:'36', label:'Winning en distributie van water' },
+    { code:'37', label:'Afvalwaterinzameling en -behandeling' },
+    { code:'38', label:'Afvalinzameling en -behandeling' },
+    { code:'39', label:'Sanering en overig afvalbeheer' },
+    { code:'F', label:'Bouwnijverheid', section:true },
+    { code:'41', label:'Algemene burgerlijke en utiliteitsbouw' },
+    { code:'42', label:'Grond-, water- en wegenbouw' },
+    { code:'43', label:'Gespecialiseerde bouw' },
+    { code:'G', label:'Groot- en detailhandel; reparatie van auto\'s', section:true },
+    { code:'45', label:'Handel in en reparatie van auto\'s' },
+    { code:'46', label:'Groothandel (niet auto\'s)' },
+    { code:'47', label:'Detailhandel (niet auto\'s)' },
+    { code:'H', label:'Vervoer en opslag', section:true },
+    { code:'49', label:'Vervoer over land' },
+    { code:'50', label:'Vervoer over water' },
+    { code:'51', label:'Luchtvaart' },
+    { code:'52', label:'Opslag en dienstverlening voor vervoer' },
+    { code:'53', label:'Post en koeriers' },
+    { code:'I', label:'Logies-, maaltijd- en drankverstrekking', section:true },
+    { code:'55', label:'Logiesverstrekking' },
+    { code:'56', label:'Eet- en drinkgelegenheden' },
+    { code:'J', label:'Informatie en communicatie', section:true },
+    { code:'58', label:'Uitgeverijen' },
+    { code:'59', label:'Film- en tv-productie, geluidsopname' },
+    { code:'60', label:'Radio- en televisieomroepen' },
+    { code:'61', label:'Telecommunicatie' },
+    { code:'62', label:'IT-dienstverlening' },
+    { code:'63', label:'Diensten op het gebied van informatie' },
+    { code:'K', label:'Financiële instellingen', section:true },
+    { code:'64', label:'Financiële dienstverlening' },
+    { code:'65', label:'Verzekeringen en pensioenfondsen' },
+    { code:'66', label:'Overige financiële dienstverlening' },
+    { code:'L', label:'Verhuur van en handel in onroerend goed', section:true },
+    { code:'68', label:'Verhuur van en handel in onroerend goed' },
+    { code:'M', label:'Advisering, onderzoek en overige specialistische dienstverlening', section:true },
+    { code:'69', label:'Rechtskundige dienstverlening, accountancy en belastingadvisering' },
+    { code:'70', label:'Holdings en managementadvies' },
+    { code:'71', label:'Architecten, ingenieurs en technisch advies' },
+    { code:'72', label:'Speur- en ontwikkelingswerk' },
+    { code:'73', label:'Reclame en marktonderzoek' },
+    { code:'74', label:'Industrieel ontwerp, fotografie, vertaling' },
+    { code:'75', label:'Veterinaire dienstverlening' },
+    { code:'N', label:'Verhuur van roerende goederen en overige zakelijke dienstverlening', section:true },
+    { code:'77', label:'Verhuur van roerende goederen' },
+    { code:'78', label:'Uitzendbureaus en arbeidsbemiddeling' },
+    { code:'79', label:'Reisbureaus en touroperators' },
+    { code:'80', label:'Beveiliging en opsporing' },
+    { code:'81', label:'Schoonmaak en landschapsverzorging' },
+    { code:'82', label:'Overige zakelijke dienstverlening' },
+    { code:'O', label:'Openbaar bestuur en overheidsdiensten', section:true },
+    { code:'84', label:'Openbaar bestuur, overheidsdiensten en sociale verzekeringen' },
+    { code:'P', label:'Onderwijs', section:true },
+    { code:'85', label:'Onderwijs' },
+    { code:'Q', label:'Gezondheids- en welzijnszorg', section:true },
+    { code:'86', label:'Gezondheidszorg' },
+    { code:'87', label:'Verpleging, verzorging en begeleiding met overnachting' },
+    { code:'88', label:'Maatschappelijke dienstverlening zonder overnachting' },
+    { code:'R', label:'Cultuur, sport en recreatie', section:true },
+    { code:'90', label:'Kunst' },
+    { code:'91', label:'Bibliotheken, musea en natuurbehoud' },
+    { code:'92', label:'Loterijen en kansspelen' },
+    { code:'93', label:'Sport en recreatie' },
+    { code:'S', label:'Overige dienstverlening', section:true },
+    { code:'94', label:'Levensbeschouwelijke en politieke organisaties, belangen- en ideële organisaties' },
+    { code:'95', label:'Reparatie van computers en consumentenartikelen' },
+    { code:'96', label:'Overige persoonlijke dienstverlening' },
+    { code:'T', label:'Huishoudens als werkgever', section:true },
+    { code:'97', label:'Huishoudens als werkgever van huishoudelijk personeel' },
+    { code:'U', label:'Extraterritoriale organisaties', section:true },
+    { code:'99', label:'Extraterritoriale organisaties en lichamen' }
+];
+
+// Salary estimates per SBI section (bruto jaarsalaris, bron: CBS sectorgemiddelden)
+const SECTOR_SALARIES = {
+    'A': 32000, 'B': 62000, 'C': 42000, 'D': 58000, 'E': 40000,
+    'F': 40000, 'G': 34000, 'H': 36000, 'I': 26000, 'J': 56000,
+    'K': 64000, 'L': 46000, 'M': 52000, 'N': 30000, 'O': 48000,
+    'P': 44000, 'Q': 38000, 'R': 32000, 'S': 30000, 'T': 24000, 'U': 52000
+};
+
+const EMPLOYER_COST_FACTOR = 1.30; // ~30% werkgeverslasten
+
+// ===== SBI SEARCH =====
+let sbiDropdownOpen = false;
+
+function openSBIDropdown() {
+    sbiDropdownOpen = true;
+    filterSBI();
+    document.getElementById('sbi-dropdown').classList.add('open');
+}
+
+function closeSBIDropdown() {
+    sbiDropdownOpen = false;
+    document.getElementById('sbi-dropdown').classList.remove('open');
+}
+
+function filterSBI() {
+    const query = document.getElementById('sbi-input').value.toLowerCase().trim();
+    const dropdown = document.getElementById('sbi-dropdown');
+
+    let html = '';
+    let count = 0;
+    const maxResults = 50;
+
+    SBI_DATA.forEach(item => {
+        if (count >= maxResults) return;
+
+        const matchesQuery = !query ||
+            item.code.toLowerCase().includes(query) ||
+            item.label.toLowerCase().includes(query);
+
+        if (!matchesQuery) return;
+
+        if (item.section) {
+            html += `<div class="search-select-option section">
+                <span class="opt-code">${item.code}</span>
+                <span class="opt-label">${item.label}</span>
+            </div>`;
+        } else {
+            html += `<div class="search-select-option" onclick="selectSBI('${item.code}', '${item.label.replace(/'/g, "\\'")}')">
+                <span class="opt-code">${item.code}</span>
+                <span class="opt-label">${item.label}</span>
+            </div>`;
+            count++;
+        }
+    });
+
+    if (count === 0 && query) {
+        html = '<div style="padding:12px;color:#999;text-align:center;">Geen resultaten</div>';
+    }
+
+    dropdown.innerHTML = html;
+    if (!dropdown.classList.contains('open')) dropdown.classList.add('open');
+}
+
+function selectSBI(code, label) {
+    state.company.sbiCode = code;
+    state.company.sbiLabel = label;
+
+    document.getElementById('sbi-input').value = '';
+    document.getElementById('sbi-selected').innerHTML =
+        `<strong>${code}</strong> — ${label} &#x2705;`;
+
+    closeSBIDropdown();
+    saveCompanyProfile();
+    updateSalaryIndicator();
+    updateCostOverview();
+}
+
+function getSBISection(code) {
+    // Find the section letter for a 2-digit code
+    for (let i = SBI_DATA.length - 1; i >= 0; i--) {
+        if (SBI_DATA[i].section && SBI_DATA[i].code.length === 1) {
+            // Check if this section contains the code
+            const sectionIdx = SBI_DATA.indexOf(SBI_DATA[i]);
+            for (let j = sectionIdx + 1; j < SBI_DATA.length; j++) {
+                if (SBI_DATA[j].section) break;
+                if (SBI_DATA[j].code === code) return SBI_DATA[i].code;
+            }
+        }
+    }
+    return null;
+}
+
+function updateSalaryIndicator() {
+    const indicator = document.getElementById('salary-indicator');
+    const code = state.company.sbiCode;
+    if (!code) { indicator.style.display = 'none'; return; }
+
+    const section = getSBISection(code);
+    const salary = SECTOR_SALARIES[section] || 40000;
+    const cost = Math.round(salary * EMPLOYER_COST_FACTOR);
+
+    document.getElementById('sector-salary').textContent = '€ ' + salary.toLocaleString('nl-NL');
+    document.getElementById('sector-cost').textContent = '€ ' + cost.toLocaleString('nl-NL');
+    indicator.style.display = 'block';
+}
+
+function updateCostOverview() {
+    const container = document.getElementById('cost-overview');
+    const code = state.company.sbiCode;
+    if (!code) {
+        container.innerHTML = '<p style="color:#aaa;font-size:0.9em;">Selecteer een branchecode om kostenindicaties te zien.</p>';
+        return;
+    }
+
+    const section = getSBISection(code);
+    const baseSalary = SECTOR_SALARIES[section] || 40000;
+    const costPerFte = Math.round(baseSalary * EMPLOYER_COST_FACTOR);
+
+    let totalCost = 0;
+    let html = '';
+
+    state.departments.forEach(dept => {
+        const filled = getDeptFilled(dept.id);
+        const deptCost = Math.round(filled * costPerFte);
+        totalCost += deptCost;
+
+        html += `<div class="cost-bar">
+            <span class="cost-label" style="display:flex;align-items:center;gap:6px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${dept.color};flex-shrink:0;"></span>
+                ${dept.name} (${filled.toFixed(1)} FTE)
+            </span>
+            <span class="cost-value">€ ${deptCost.toLocaleString('nl-NL')}</span>
+        </div>`;
+    });
+
+    const totalFte = state.allocations.reduce((s, a) => s + a.fte, 0);
+    const unallocatedFte = state.employees.reduce((s, e) => s + e.fte, 0) - totalFte;
+
+    if (unallocatedFte > 0.05) {
+        const unallocCost = Math.round(unallocatedFte * costPerFte);
+        totalCost += unallocCost;
+        html += `<div class="cost-bar" style="opacity:0.5;">
+            <span class="cost-label">Niet-toegewezen (${unallocatedFte.toFixed(1)} FTE)</span>
+            <span class="cost-value">€ ${unallocCost.toLocaleString('nl-NL')}</span>
+        </div>`;
+    }
+
+    html += `<div class="cost-bar" style="background:var(--dark);color:white;margin-top:8px;border-radius:10px;">
+        <span style="font-weight:600;">Totaal geschat</span>
+        <span style="font-weight:700;font-size:1.1em;">€ ${totalCost.toLocaleString('nl-NL')} /jaar</span>
+    </div>`;
+    html += `<div style="font-size:0.7em;color:#aaa;margin-top:4px;">Op basis van sectorgemiddelde € ${costPerFte.toLocaleString('nl-NL')}/FTE incl. werkgeverslasten.</div>`;
+
+    container.innerHTML = html;
+}
+
+// ===== COMPANY PROFILE =====
+function saveCompanyProfile() {
+    state.company.name = document.getElementById('company-name').value.trim();
+    state.company.type = document.getElementById('company-type').value;
+    updateTopbarTitle();
+    saveState();
+}
+
+function loadCompanyProfile() {
+    if (!state.company) state.company = { name:'', sbiCode:'', sbiLabel:'', type:'' };
+    document.getElementById('company-name').value = state.company.name || '';
+    document.getElementById('company-type').value = state.company.type || '';
+    if (state.company.sbiCode) {
+        document.getElementById('sbi-selected').innerHTML =
+            `<strong>${state.company.sbiCode}</strong> — ${state.company.sbiLabel} &#x2705;`;
+        updateSalaryIndicator();
+    }
+    updateTopbarTitle();
+}
+
+function updateTopbarTitle() {
+    const title = document.getElementById('topbar-title');
+    if (state.company && state.company.name) {
+        title.textContent = state.company.name;
+    } else {
+        title.textContent = 'Wie Zit Waar?';
+    }
+}
+
+// Close SBI dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (sbiDropdownOpen && !e.target.closest('#sbi-search')) {
+        closeSBIDropdown();
+    }
+});
+
 // ===== INIT =====
 loadState();
+loadCompanyProfile();
 renderAll();
+updateCostOverview();
 
 // Load demo if fresh
 if (state.employees.length === 0 && state.departments.length === 0) {
