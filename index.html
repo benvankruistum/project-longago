@@ -1089,7 +1089,7 @@ function openDeptSheet(deptId) {
         <div class="form-row">
             <div class="form-group">
                 <label>Benodigde FTE</label>
-                <input type="number" id="f-dept-fte" min="0.5" max="50" step="0.5" value="${dept ? dept.fteNeeded : 3}">
+                <input type="number" id="f-dept-fte" min="0.1" max="50" step="0.1" value="${dept ? dept.fteNeeded : 3}">
             </div>
             <div class="form-group">
                 <label>Prioriteit</label>
@@ -1103,11 +1103,11 @@ function openDeptSheet(deptId) {
         <div class="form-row">
             <div class="form-group">
                 <label>Min. FTE</label>
-                <input type="number" id="f-dept-min" min="0" max="50" step="0.5" value="${dept ? dept.minFte : 1}">
+                <input type="number" id="f-dept-min" min="0" max="50" step="0.1" value="${dept ? dept.minFte : 1}">
             </div>
             <div class="form-group">
                 <label>Max. FTE</label>
-                <input type="number" id="f-dept-max" min="0.5" max="50" step="0.5" value="${dept ? dept.maxFte : 5}">
+                <input type="number" id="f-dept-max" min="0.1" max="50" step="0.1" value="${dept ? dept.maxFte : 5}">
             </div>
         </div>
         <div class="form-group">
@@ -1143,7 +1143,7 @@ function saveDepartment(deptId) {
     const color = document.getElementById('f-dept-color').value;
 
     if (!name) { toast('Vul een naam in!', 'error'); return; }
-    if (isNaN(fteNeeded) || fteNeeded < 0.5) { toast('FTE moet minimaal 0.5 zijn!', 'error'); return; }
+    if (isNaN(fteNeeded) || fteNeeded < 0.1) { toast('FTE moet minimaal 0.1 zijn!', 'error'); return; }
 
     if (deptId) {
         const dept = state.departments.find(d => d.id === deptId);
