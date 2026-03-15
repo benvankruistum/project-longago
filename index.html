@@ -40,12 +40,75 @@
             height: 100vh;
             z-index: 100;
             box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 200;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            background: var(--sidebar-bg);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.3s ease;
+        }
+
+        .sidebar-toggle.shifted {
+            left: 332px;
         }
 
         .sidebar-header {
             padding: 20px;
             background: #1a252f;
             text-align: center;
+        }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+            }
+
+            .canvas-toolbar {
+                top: 12px;
+                left: 60px;
+                right: auto;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .toolbar-btn {
+                font-size: 0.7em;
+                padding: 6px 10px;
+            }
+
+            .modal {
+                min-width: auto;
+                width: 92vw;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
         }
 
         .sidebar-header h1 {
@@ -732,8 +795,11 @@
 </head>
 <body>
 
+<!-- SIDEBAR TOGGLE (mobile) -->
+<button class="sidebar-toggle shifted" id="sidebar-toggle" onclick="toggleSidebar()">&#x2630;</button>
+
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h1>&#x1F3E2; Workforce Allocator</h1>
         <div class="subtitle">Wie Zit Waar? &mdash; Sleep &amp; Verdeel</div>
@@ -1863,6 +1929,25 @@ document.addEventListener('keydown', (e) => {
         closeAllocPopup();
     }
 });
+
+// ===== SIDEBAR TOGGLE =====
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebar-toggle');
+    const collapsed = sidebar.classList.toggle('collapsed');
+    toggle.classList.toggle('shifted', !collapsed);
+    toggle.innerHTML = collapsed ? '&#x2630;' : '&#x2716;';
+}
+
+// On mobile, start with sidebar open, tap to close
+if (window.innerWidth <= 768) {
+    // Start collapsed on mobile so canvas is visible
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebar-toggle');
+    sidebar.classList.add('collapsed');
+    toggle.classList.remove('shifted');
+    toggle.innerHTML = '&#x2630;';
+}
 
 // ===== INIT =====
 loadState();
