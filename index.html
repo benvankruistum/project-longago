@@ -1206,14 +1206,18 @@ function updateScores() {
         if (filled > dept.maxFte) score -= Math.round((filled - dept.maxFte) * 10);
         if (filled < dept.fteNeeded) gaps++;
 
-        // Role mismatch penalty: -25 points per mismatched FTE * priority
+        // Role mismatch penalty: scales with priority AND % of employee's total FTE
+        // Someone spending 80% of their time on a wrong role is much worse than 10%
         const deptAllocs = state.allocations.filter(a => a.deptId === dept.id);
         deptAllocs.forEach(a => {
             const emp = state.employees.find(e => e.id === a.empId);
             if (!emp) return;
             const assignedRole = a.asRole || emp.role;
             if (assignedRole !== emp.role) {
-                const penalty = Math.round(a.fte * 25 * m);
+                const ftePct = emp.fte > 0 ? a.fte / emp.fte : 0; // 0.0 - 1.0
+                // Base 25 * priority, then scaled quadratically by FTE%
+                // 10% FTE mismatch = mild, 80% = severe
+                const penalty = Math.round(25 * m * ftePct * (1 + ftePct));
                 mismatchPenalty += penalty;
                 score -= penalty;
             }
