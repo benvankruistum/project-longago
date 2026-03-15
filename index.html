@@ -1177,7 +1177,7 @@ function openEmployeeSheet(empId) {
             <div class="form-group">
                 <label>Rol</label>
                 <select id="f-emp-role">
-                    ${['developer','designer','manager','sales','marketing','hr','finance','support','operations','overig']
+                    ${getAllRoles()
                         .map(r => `<option value="${r}" ${emp && emp.role === r ? 'selected' : ''}>${roleLabel(r)}</option>`).join('')}
                 </select>
             </div>
@@ -1480,10 +1480,18 @@ function adjustAllocations(empId, maxFte) {
     allocs.forEach(a => { a.fte = Math.round(a.fte * ratio * 10) / 10; });
 }
 
+function getAllRoles() {
+    const builtIn = ['developer','designer','manager','sales','marketing','hr','finance','support','operations','overig'];
+    const custom = state.departments.flatMap(d => d.roles);
+    const all = [...new Set([...builtIn, ...custom])].filter(r => r);
+    return all;
+}
+
 function roleLabel(r) {
-    return { developer:'Developer', designer:'Designer', manager:'Manager', sales:'Sales',
+    const labels = { developer:'Developer', designer:'Designer', manager:'Manager', sales:'Sales',
              marketing:'Marketing', hr:'HR', finance:'Finance', support:'Support',
-             operations:'Operations', overig:'Overig' }[r] || r;
+             operations:'Operations', overig:'Overig' };
+    return labels[r] || r.charAt(0).toUpperCase() + r.slice(1);
 }
 
 function priorityLabel(p) {
