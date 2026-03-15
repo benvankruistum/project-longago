@@ -6,7 +6,9 @@
     <title>Wie Zit Waar?</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none; }
 
         :root {
             --bg: #f0e6d3;
@@ -375,6 +377,12 @@
             -webkit-appearance: none;
         }
 
+        .form-group input, .form-group select,
+        .form-group textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
         .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: var(--accent2);
@@ -442,14 +450,37 @@
         /* ===== CANVAS VIEW ===== */
         .canvas-scroll {
             min-height: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            align-content: start;
+        }
+
+        @media (min-width: 600px) {
+            .canvas-scroll { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (min-width: 900px) {
+            .canvas-scroll { grid-template-columns: 1fr 1fr 1fr; }
         }
 
         .canvas-dept {
             background: white;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            margin-bottom: 16px;
             overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .canvas-dept.dragging {
+            opacity: 0.85;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            z-index: 100;
+            transform: scale(1.03);
+        }
+
+        .canvas-dept.drop-placeholder {
+            opacity: 0.3;
         }
 
         .canvas-dept-header {
@@ -459,6 +490,20 @@
             justify-content: space-between;
             cursor: pointer;
         }
+
+        .drag-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            color: #ccc;
+            font-size: 1.2em;
+            cursor: grab;
+            flex-shrink: 0;
+            touch-action: none;
+        }
+
+        .drag-handle:active { cursor: grabbing; }
 
         .canvas-dept-title {
             font-weight: 700;
@@ -701,6 +746,7 @@ let state = {
     employees: [],
     departments: [],
     allocations: [],    // { empId, deptId, fte }
+    deptOrder: [],      // ordered dept ids for canvas
     nextEmpId: 1,
     nextDeptId: 1
 };
@@ -777,8 +823,15 @@ function renderAll() {
 function renderCanvas() {
     const container = document.getElementById('canvas-content');
 
-    // Show departments that are "on the canvas" — in this mobile version, all departments show
-    const depts = state.departments;
+    // Show departments in saved order
+    let depts = state.departments.slice();
+    if (state.deptOrder && state.deptOrder.length > 0) {
+        depts.sort((a, b) => {
+            const ia = state.deptOrder.indexOf(a.id);
+            const ib = state.deptOrder.indexOf(b.id);
+            return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        });
+    }
 
     if (depts.length === 0) {
         container.innerHTML = `<div class="empty">
@@ -820,14 +873,15 @@ function renderCanvas() {
             });
         }
 
-        html += `<div class="canvas-dept">
+        html += `<div class="canvas-dept" data-dept-id="${dept.id}">
             <div class="card-color-bar" style="background:${dept.color}"></div>
-            <div class="canvas-dept-header" onclick="openDeptSheet(${dept.id})">
-                <div>
+            <div class="canvas-dept-header">
+                <div class="drag-handle" data-drag="true">&#x2630;</div>
+                <div style="flex:1" onclick="openDeptSheet(${dept.id})">
                     <div class="canvas-dept-title">${dept.name}</div>
                     <div class="card-sub">${filled.toFixed(1)} / ${dept.fteNeeded.toFixed(1)} FTE &nbsp; <span class="badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span></div>
                 </div>
-                <span style="color:#ccc;font-size:1.2em;">&#x270F;</span>
+                <span style="color:#ccc;font-size:1.2em;" onclick="openDeptSheet(${dept.id})">&#x270F;</span>
             </div>
             <div class="canvas-dept-body">
                 <div class="fte-bar">
@@ -845,6 +899,123 @@ function renderCanvas() {
     });
 
     container.innerHTML = html;
+    initCanvasDrag();
+}
+
+// ===== CANVAS DRAG REORDER =====
+let dragEl = null;
+let dragStartY = 0;
+let dragStartX = 0;
+let dragOffsetY = 0;
+let dragOffsetX = 0;
+let dragClone = null;
+let dragPlaceholder = null;
+
+function initCanvasDrag() {
+    const container = document.getElementById('canvas-content');
+    const handles = container.querySelectorAll('[data-drag="true"]');
+
+    handles.forEach(handle => {
+        handle.addEventListener('touchstart', onDragStart, { passive: false });
+        handle.addEventListener('mousedown', onDragStart);
+    });
+}
+
+function onDragStart(e) {
+    e.preventDefault();
+    const card = e.target.closest('.canvas-dept');
+    if (!card) return;
+
+    dragEl = card;
+    const rect = card.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+
+    dragStartY = touch.clientY;
+    dragStartX = touch.clientX;
+    dragOffsetY = touch.clientY - rect.top;
+    dragOffsetX = touch.clientX - rect.left;
+
+    // Create floating clone
+    dragClone = card.cloneNode(true);
+    dragClone.style.position = 'fixed';
+    dragClone.style.left = rect.left + 'px';
+    dragClone.style.top = rect.top + 'px';
+    dragClone.style.width = rect.width + 'px';
+    dragClone.style.zIndex = '999';
+    dragClone.style.pointerEvents = 'none';
+    dragClone.classList.add('dragging');
+    document.body.appendChild(dragClone);
+
+    // Make original a placeholder
+    card.classList.add('drop-placeholder');
+
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+}
+
+function onDragMove(e) {
+    if (!dragEl || !dragClone) return;
+    e.preventDefault();
+
+    const touch = e.touches ? e.touches[0] : e;
+    dragClone.style.left = (touch.clientX - dragOffsetX) + 'px';
+    dragClone.style.top = (touch.clientY - dragOffsetY) + 'px';
+
+    // Find card under finger
+    const container = document.getElementById('canvas-content');
+    const cards = [...container.querySelectorAll('.canvas-dept:not(.drop-placeholder)')];
+
+    for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const midX = rect.left + rect.width / 2;
+
+        // Check if touch is within this card's bounds
+        if (touch.clientY > rect.top && touch.clientY < rect.bottom &&
+            touch.clientX > rect.left && touch.clientX < rect.right) {
+
+            const isVertical = container.offsetWidth < 600;
+            if (isVertical) {
+                if (touch.clientY < midY) {
+                    container.insertBefore(dragEl, card);
+                } else {
+                    container.insertBefore(dragEl, card.nextSibling);
+                }
+            } else {
+                // Grid: compare position
+                const dragRect = dragEl.getBoundingClientRect();
+                if (touch.clientY < midY || (touch.clientY < rect.bottom && touch.clientX < midX)) {
+                    container.insertBefore(dragEl, card);
+                } else {
+                    container.insertBefore(dragEl, card.nextSibling);
+                }
+            }
+            break;
+        }
+    }
+}
+
+function onDragEnd(e) {
+    if (dragClone) {
+        dragClone.remove();
+        dragClone = null;
+    }
+    if (dragEl) {
+        dragEl.classList.remove('drop-placeholder');
+        // Save new order
+        const container = document.getElementById('canvas-content');
+        const newOrder = [...container.querySelectorAll('.canvas-dept')].map(el => parseInt(el.dataset.deptId));
+        state.deptOrder = newOrder;
+        saveState();
+        dragEl = null;
+    }
+
+    document.removeEventListener('touchmove', onDragMove);
+    document.removeEventListener('touchend', onDragEnd);
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
 }
 
 // ===== EMPLOYEES VIEW =====
@@ -1398,6 +1569,7 @@ function loadDemo() {
         { id: 4, name: 'Management', fteNeeded: 1, priority: 'high', minFte: 1, maxFte: 2, roles: ['manager'], color: '#f39c12' },
     ];
     state.allocations = [];
+    state.deptOrder = [1, 2, 3, 4];
     state.nextEmpId = 7;
     state.nextDeptId = 5;
     saveState();
