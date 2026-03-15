@@ -2,954 +2,697 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workforce Allocator - Wie Zit Waar?</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Wie Zit Waar?</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         :root {
             --bg: #f0e6d3;
-            --sidebar-bg: #2c3e50;
-            --card-bg: #fff;
             --accent: #e74c3c;
             --accent2: #3498db;
             --accent3: #2ecc71;
             --accent4: #f39c12;
             --text: #2c3e50;
             --text-light: #ecf0f1;
-            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --dark: #2c3e50;
+            --shadow: 0 2px 12px rgba(0,0,0,0.12);
+            --radius: 16px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-        }
-
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            width: 320px;
-            min-width: 320px;
-            background: var(--sidebar-bg);
-            color: var(--text-light);
+            height: 100dvh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            z-index: 100;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease;
+            overflow: hidden;
+            user-select: none;
         }
 
-        .sidebar.collapsed {
-            transform: translateX(-100%);
-        }
-
-        .sidebar-toggle {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 200;
-            width: 44px;
-            height: 44px;
-            border: none;
-            border-radius: 12px;
-            background: var(--sidebar-bg);
+        /* ===== TOP BAR ===== */
+        .topbar {
+            background: var(--dark);
             color: white;
-            font-size: 22px;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            display: none;
+            padding: 12px 16px;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            transition: left 0.3s ease;
-        }
-
-        .sidebar-toggle.shifted {
-            left: 332px;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            background: #1a252f;
-            text-align: center;
-        }
-
-        /* ===== MOBILE ===== */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-            }
-
-            .sidebar-toggle {
-                display: flex;
-            }
-
-            .canvas-toolbar {
-                top: 12px;
-                left: 60px;
-                right: auto;
-                flex-wrap: wrap;
-                gap: 4px;
-            }
-
-            .toolbar-btn {
-                font-size: 0.7em;
-                padding: 6px 10px;
-            }
-
-            .modal {
-                min-width: auto;
-                width: 92vw;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-        }
-
-        .sidebar-header h1 {
-            font-size: 1.3em;
-            margin-bottom: 4px;
-        }
-
-        .sidebar-header .subtitle {
-            font-size: 0.8em;
-            opacity: 0.7;
-        }
-
-        .score-bar {
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 20px;
-            background: #1e2d3d;
-            border-bottom: 2px solid #34495e;
-        }
-
-        .score-item {
-            text-align: center;
-        }
-
-        .score-item .label {
-            font-size: 0.65em;
-            text-transform: uppercase;
-            opacity: 0.6;
-            letter-spacing: 1px;
-        }
-
-        .score-item .value {
-            font-size: 1.4em;
-            font-weight: bold;
-        }
-
-        .score-item .value.good { color: var(--accent3); }
-        .score-item .value.warn { color: var(--accent4); }
-        .score-item .value.bad { color: var(--accent); }
-
-        .sidebar-tabs {
-            display: flex;
-            border-bottom: 2px solid #34495e;
-        }
-
-        .sidebar-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 0.85em;
-            font-weight: 600;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.5);
-            transition: all 0.2s;
-        }
-
-        .sidebar-tab.active {
-            color: white;
-            background: #34495e;
-            border-bottom: 3px solid var(--accent2);
-        }
-
-        .sidebar-tab:hover { color: white; }
-
-        .sidebar-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
-        .sidebar-content::-webkit-scrollbar { width: 6px; }
-        .sidebar-content::-webkit-scrollbar-thumb { background: #4a6278; border-radius: 3px; }
-
-        .section-title {
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+            flex-shrink: 0;
+            z-index: 50;
         }
 
-        .section-title h3 {
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.7;
+        .topbar h1 { font-size: 1.1em; }
+
+        .score-pills {
+            display: flex;
+            gap: 8px;
         }
 
-        .btn {
-            padding: 6px 14px;
-            border: none;
+        .pill {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 10px;
             border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.8em;
+            font-size: 0.75em;
             font-weight: 600;
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .btn-add {
-            background: var(--accent2);
-            color: white;
-        }
+        .pill.good { background: rgba(46,204,113,0.3); }
+        .pill.warn { background: rgba(243,156,18,0.3); }
+        .pill.bad { background: rgba(231,76,60,0.3); }
 
-        .btn-add:hover { background: #2980b9; transform: scale(1.05); }
-
-        .btn-danger {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-danger:hover { background: #c0392b; }
-
-        .btn-save {
-            background: var(--accent3);
-            color: white;
-        }
-
-        .btn-save:hover { background: #27ae60; }
-
-        /* Employee cards in sidebar */
-        .employee-card {
-            background: #34495e;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            cursor: grab;
-            transition: all 0.2s;
-            border-left: 4px solid var(--accent2);
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            overflow: hidden;
             position: relative;
         }
 
-        .employee-card:hover {
-            background: #3d566e;
-            transform: translateX(4px);
+        .view {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            padding-bottom: 90px;
+            display: none;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .employee-card.dragging {
-            opacity: 0.5;
+        .view.active { display: block; }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottomnav {
+            background: white;
+            display: flex;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            padding-bottom: var(--safe-bottom);
+            z-index: 50;
         }
 
-        .employee-card .emp-header {
+        .nav-item {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #999;
+            font-size: 0.7em;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-item .nav-icon { font-size: 1.8em; display: block; margin-bottom: 2px; }
+        .nav-item.active { color: var(--accent2); }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: transform 0.15s;
+        }
+
+        .card:active { transform: scale(0.98); }
+
+        .card-color-bar {
+            height: 6px;
+        }
+
+        .card-body {
+            padding: 14px 16px;
+        }
+
+        .card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 6px;
+            gap: 12px;
         }
 
-        .emp-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
+        .card-title {
+            font-weight: 700;
+            font-size: 1em;
+            flex: 1;
+        }
+
+        .card-sub {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ===== POPPETJE ===== */
+        .poppetje {
+            width: 44px;
+            height: 44px;
             flex-shrink: 0;
         }
 
-        .emp-info { flex: 1; }
-
-        .emp-name {
-            font-weight: 600;
-            font-size: 0.95em;
+        .poppetje-small {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
         }
 
-        .emp-role {
-            font-size: 0.75em;
-            opacity: 0.6;
-        }
-
-        .emp-fte {
-            font-size: 0.75em;
-            margin-top: 4px;
-        }
-
+        /* ===== FTE BAR ===== */
         .fte-bar {
-            height: 6px;
-            background: #1a252f;
-            border-radius: 3px;
-            margin-top: 3px;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-top: 10px;
             overflow: hidden;
         }
 
         .fte-bar-fill {
             height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-
-        .emp-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 4px;
-        }
-
-        .emp-action-btn {
-            width: 22px;
-            height: 22px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .employee-card:hover .emp-action-btn { opacity: 1; }
-
-        .emp-action-btn.edit { background: var(--accent4); color: white; }
-        .emp-action-btn.delete { background: var(--accent); color: white; }
-
-        /* Department templates in sidebar */
-        .dept-template {
-            background: #34495e;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            cursor: grab;
-            transition: all 0.2s;
-            border-left: 4px solid var(--accent4);
-        }
-
-        .dept-template:hover {
-            background: #3d566e;
-            transform: translateX(4px);
-        }
-
-        .dept-template .dept-name {
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-
-        .dept-template .dept-meta {
-            font-size: 0.75em;
-            opacity: 0.6;
-            margin-top: 2px;
-        }
-
-        /* ===== CANVAS ===== */
-        .canvas-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #canvas {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background:
-                radial-gradient(circle at 20% 30%, #d5e8d4 0%, transparent 50%),
-                radial-gradient(circle at 70% 60%, #dae8fc 0%, transparent 50%),
-                radial-gradient(circle at 50% 80%, #fff2cc 0%, transparent 40%),
-                var(--bg);
-            background-size: cover;
-        }
-
-        /* Grid pattern overlay */
-        #canvas::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image:
-                radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px);
-            background-size: 30px 30px;
-            pointer-events: none;
-        }
-
-        /* SVG for connection lines */
-        #connections-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        /* Department on canvas */
-        .dept-on-canvas {
-            position: absolute;
-            min-width: 200px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            cursor: move;
-            z-index: 10;
-            transition: box-shadow 0.2s;
-            overflow: hidden;
-        }
-
-        .dept-on-canvas:hover {
-            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-        }
-
-        .dept-on-canvas.drop-target {
-            box-shadow: 0 0 0 4px var(--accent2), 0 8px 30px rgba(52,152,219,0.4);
-        }
-
-        .dept-roof {
-            height: 8px;
-            border-radius: 16px 16px 0 0;
-        }
-
-        .dept-body {
-            padding: 14px;
-        }
-
-        .dept-title {
-            font-weight: 700;
-            font-size: 1em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .dept-title .priority-badge {
-            font-size: 0.65em;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .priority-high { background: #fde8e8; color: var(--accent); }
-        .priority-medium { background: #fef3cd; color: #856404; }
-        .priority-low { background: #d4edda; color: #155724; }
-
-        .dept-stats {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-            font-size: 0.75em;
-        }
-
-        .dept-stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .dept-fte-bar {
-            height: 10px;
-            background: #eee;
-            border-radius: 5px;
-            margin-top: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .dept-fte-fill {
-            height: 100%;
-            border-radius: 5px;
+            border-radius: 4px;
             transition: width 0.4s ease;
         }
 
-        .dept-fte-label {
-            font-size: 0.7em;
-            margin-top: 4px;
+        .fte-info {
             display: flex;
             justify-content: space-between;
-            color: #666;
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 4px;
         }
 
-        .dept-roles-needed {
-            margin-top: 8px;
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block;
+            font-size: 0.7em;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .badge-high { background: #fde8e8; color: var(--accent); }
+        .badge-medium { background: #fef3cd; color: #856404; }
+        .badge-low { background: #d4edda; color: #155724; }
+        .badge-role { background: #eef2f7; color: #555; }
+        .badge-filled { background: #d4edda; color: #155724; }
+        .badge-unfilled { background: #fde8e8; color: #721c24; }
+
+        .badges-row {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            margin-top: 8px;
         }
 
-        .role-tag {
-            font-size: 0.65em;
-            padding: 2px 8px;
-            border-radius: 10px;
-            background: #eef2f7;
-            color: #555;
-        }
-
-        .role-tag.filled { background: #d4edda; color: #155724; }
-        .role-tag.unfilled { background: #fde8e8; color: #721c24; }
-
-        /* Poppetjes on departments */
-        .dept-employees {
+        /* ===== DEPT EMPLOYEES LIST ===== */
+        .dept-people {
             margin-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 10px;
+        }
+
+        .dept-person-row {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            min-height: 40px;
-            padding: 6px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 2px dashed #dee2e6;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f8f8;
         }
 
-        .dept-employees.drag-over {
-            border-color: var(--accent2);
-            background: #ebf5fb;
+        .dept-person-row:last-child { border-bottom: none; }
+
+        .dept-person-name { flex: 1; font-size: 0.9em; font-weight: 500; }
+
+        .dept-person-fte {
+            font-size: 0.85em;
+            font-weight: 700;
+            color: var(--accent2);
+            min-width: 50px;
+            text-align: right;
         }
 
-        .mini-poppetje {
-            position: relative;
+        .dept-person-remove {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: #fee;
+            color: var(--accent);
+            font-size: 14px;
             cursor: pointer;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary { background: var(--accent2); color: white; }
+        .btn-success { background: var(--accent3); color: white; }
+        .btn-danger { background: var(--accent); color: white; }
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid #ddd;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            width: auto;
+            border-radius: 12px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-row .btn { flex: 1; }
+
+        .fab {
+            position: fixed;
+            bottom: calc(70px + var(--safe-bottom));
+            right: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent2);
+            color: white;
+            font-size: 28px;
+            box-shadow: 0 4px 20px rgba(52,152,219,0.4);
+            cursor: pointer;
+            z-index: 40;
             transition: transform 0.2s;
         }
 
-        .mini-poppetje:hover {
-            transform: scale(1.15);
-        }
+        .fab:active { transform: scale(0.9); }
 
-        .mini-poppetje .fte-label {
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 8px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 1px 4px;
-            border-radius: 6px;
-            white-space: nowrap;
-        }
-
-        .dept-canvas-actions {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            display: flex;
-            gap: 4px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .dept-on-canvas:hover .dept-canvas-actions { opacity: 1; }
-
-        .dept-canvas-btn {
-            width: 24px;
-            height: 24px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.1);
-            color: #555;
-            transition: all 0.2s;
-        }
-
-        .dept-canvas-btn:hover {
-            background: rgba(0,0,0,0.2);
-        }
-
-        /* ===== MODALS ===== */
-        .modal-overlay {
+        /* ===== BOTTOM SHEET ===== */
+        .sheet-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            backdrop-filter: blur(2px);
         }
 
-        .modal-overlay.show {
-            display: flex;
-        }
+        .sheet-overlay.show { display: block; }
 
-        .modal {
+        .sheet {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
             background: white;
-            border-radius: 20px;
-            padding: 30px;
-            min-width: 420px;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: modalIn 0.3s ease;
+            border-radius: 20px 20px 0 0;
+            z-index: 210;
+            max-height: 90dvh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            padding-bottom: var(--safe-bottom);
         }
 
-        @keyframes modalIn {
-            from { transform: scale(0.9) translateY(20px); opacity: 0; }
-            to { transform: scale(1) translateY(0); opacity: 1; }
+        .sheet.show { transform: translateY(0); }
+
+        .sheet-handle {
+            width: 36px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 10px auto 6px;
         }
 
-        .modal h2 {
-            margin-bottom: 20px;
-            font-size: 1.3em;
+        .sheet-content {
+            padding: 10px 20px 30px;
+        }
+
+        .sheet-content h2 {
+            font-size: 1.2em;
+            margin-bottom: 16px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.85em;
+            font-size: 0.8em;
             font-weight: 600;
+            color: #888;
             margin-bottom: 6px;
-            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-group input, .form-group select {
             width: 100%;
-            padding: 10px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.95em;
+            padding: 12px 14px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1em;
+            background: #fafafa;
             transition: border-color 0.2s;
+            -webkit-appearance: none;
         }
 
         .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: var(--accent2);
+            background: white;
         }
 
         .form-row {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .form-row .form-group { flex: 1; }
 
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 24px;
-        }
-
-        .btn-cancel {
-            background: #eee;
-            color: #555;
-        }
-
-        .btn-cancel:hover { background: #ddd; }
-
-        /* ===== TOOLTIPS & MISC ===== */
-        .canvas-hint {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: rgba(0,0,0,0.2);
-            font-size: 1.2em;
-            pointer-events: none;
-        }
-
-        .canvas-hint .hint-icon {
-            font-size: 4em;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        /* Allocation popup */
-        .allocation-popup {
-            display: none;
-            position: fixed;
-            background: white;
-            border-radius: 14px;
-            padding: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            z-index: 500;
-            min-width: 250px;
-        }
-
-        .allocation-popup.show { display: block; }
-
-        .allocation-popup h4 {
-            margin-bottom: 10px;
-            font-size: 0.95em;
-        }
-
-        .alloc-slider-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .alloc-slider-row input[type="range"] {
-            flex: 1;
-        }
-
-        .alloc-slider-row .alloc-value {
-            font-weight: bold;
-            min-width: 40px;
-            text-align: right;
-        }
-
-        .alloc-slider-row .alloc-dept {
-            font-size: 0.85em;
-            min-width: 80px;
-        }
-
-        /* Connection line tooltip */
-        .connection-label {
-            position: absolute;
-            background: rgba(255,255,255,0.95);
-            padding: 2px 8px;
-            border-radius: 8px;
-            font-size: 0.7em;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            pointer-events: none;
-            z-index: 6;
-        }
-
-        /* Canvas toolbar */
-        .canvas-toolbar {
-            position: absolute;
-            top: 15px;
-            right: 15px;
+        .color-row {
             display: flex;
             gap: 8px;
-            z-index: 50;
+            flex-wrap: wrap;
         }
 
-        .toolbar-btn {
-            padding: 8px 16px;
-            border: none;
+        .color-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .color-dot.selected { border-color: var(--text); transform: scale(1.15); }
+        .color-dot:active { transform: scale(0.9); }
+
+        /* ===== FTE STEPPER ===== */
+        .fte-stepper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            margin: 12px 0;
+        }
+
+        .fte-stepper-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 1.4em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: all 0.15s;
+        }
+
+        .fte-stepper-btn:active { background: #f0f0f0; transform: scale(0.9); }
+
+        .fte-stepper-value {
+            font-size: 2em;
+            font-weight: 700;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* ===== CANVAS VIEW ===== */
+        .canvas-scroll {
+            min-height: 100%;
+        }
+
+        .canvas-dept {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .canvas-dept-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .canvas-dept-title {
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .canvas-dept-body {
+            padding: 0 16px 14px;
+        }
+
+        .canvas-poppetjes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .canvas-poppetje {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .canvas-poppetje:active { transform: scale(1.2); }
+
+        .canvas-poppetje .p-fte {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 1px 5px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .add-person-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 2px dashed #ccc;
+            border-radius: 50%;
+            background: #f8f8f8;
+            cursor: pointer;
+            font-size: 1.3em;
+            color: #aaa;
+            transition: all 0.15s;
+        }
+
+        .add-person-btn:active { background: #eee; transform: scale(0.9); }
+
+        /* ===== CONNECTION LINES (simplified for mobile) ===== */
+        .connection-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 8px;
+            background: #f0f4ff;
+            color: var(--accent2);
+            margin-top: 4px;
+        }
+
+        /* ===== PICK LIST ===== */
+        .pick-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 0.8em;
-            font-weight: 600;
-            background: white;
-            color: var(--text);
-            box-shadow: var(--shadow);
-            transition: all 0.2s;
-        }
-
-        .toolbar-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-
-        /* Fun empty states */
-        .empty-state {
-            text-align: center;
-            padding: 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state .empty-icon {
-            font-size: 2.5em;
+            transition: background 0.15s;
+            border: 1px solid #f0f0f0;
             margin-bottom: 8px;
         }
 
-        .empty-state p {
-            font-size: 0.85em;
+        .pick-item:active { background: #f0f4ff; }
+        .pick-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .pick-item-info { flex: 1; }
+        .pick-item-name { font-weight: 600; font-size: 0.95em; }
+        .pick-item-meta { font-size: 0.8em; color: #999; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #bbb;
         }
 
-        /* Notification */
-        .notification {
+        .empty-icon { font-size: 3em; margin-bottom: 12px; }
+        .empty p { font-size: 0.95em; line-height: 1.5; }
+
+        /* ===== TOAST ===== */
+        .toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 20px;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            padding: 10px 20px;
             border-radius: 12px;
             color: white;
             font-weight: 600;
             font-size: 0.9em;
-            z-index: 2000;
-            animation: notifIn 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 300;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            transition: transform 0.3s ease;
+            white-space: nowrap;
         }
 
-        @keyframes notifIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: var(--accent3); }
+        .toast.warning { background: var(--accent4); }
+        .toast.error { background: var(--accent); }
+
+        /* ===== SETTINGS VIEW ===== */
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #eee;
         }
 
-        .notification.success { background: var(--accent3); }
-        .notification.warning { background: var(--accent4); }
-        .notification.error { background: var(--accent); }
+        .setting-label { font-weight: 500; }
+        .setting-desc { font-size: 0.8em; color: #999; margin-top: 2px; }
     </style>
 </head>
 <body>
 
-<!-- SIDEBAR TOGGLE (mobile) -->
-<button class="sidebar-toggle shifted" id="sidebar-toggle" onclick="toggleSidebar()">&#x2630;</button>
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h1>&#x1F3E2; Workforce Allocator</h1>
-        <div class="subtitle">Wie Zit Waar? &mdash; Sleep &amp; Verdeel</div>
-    </div>
-
-    <div class="score-bar">
-        <div class="score-item">
-            <div class="label">Score</div>
-            <div class="value good" id="total-score">0</div>
-        </div>
-        <div class="score-item">
-            <div class="label">Bezetting</div>
-            <div class="value" id="fill-rate">0%</div>
-        </div>
-        <div class="score-item">
-            <div class="label">Gaten</div>
-            <div class="value bad" id="gaps-count">0</div>
-        </div>
-        <div class="score-item">
-            <div class="label">FTE vrij</div>
-            <div class="value" id="free-fte">0</div>
-        </div>
-    </div>
-
-    <div class="sidebar-tabs">
-        <button class="sidebar-tab active" data-tab="employees" onclick="switchTab('employees')">&#x1F464; Medewerkers</button>
-        <button class="sidebar-tab" data-tab="departments" onclick="switchTab('departments')">&#x1F3E0; Afdelingen</button>
-    </div>
-
-    <div class="sidebar-content" id="sidebar-content">
-        <!-- Dynamic content -->
+<!-- TOP BAR -->
+<div class="topbar">
+    <h1>Wie Zit Waar?</h1>
+    <div class="score-pills">
+        <div class="pill" id="pill-score">&#x2B50; <span id="score-val">0</span></div>
+        <div class="pill" id="pill-fill">&#x1F4CA; <span id="fill-val">0%</span></div>
+        <div class="pill" id="pill-gaps">&#x26A0;&#xFE0F; <span id="gaps-val">0</span></div>
     </div>
 </div>
 
-<!-- CANVAS -->
-<div class="canvas-container">
-    <div id="canvas">
-        <svg id="connections-svg"></svg>
-        <div class="canvas-hint" id="canvas-hint">
-            <span class="hint-icon">&#x1F3AF;</span>
-            Sleep afdelingen vanuit het menu hierheen!<br/>
-            Daarna sleep je medewerkers op de afdelingen.
-        </div>
+<!-- MAIN CONTENT -->
+<div class="main">
+
+    <!-- === OVERZICHT (Canvas) View === -->
+    <div class="view active" id="view-canvas">
+        <div class="canvas-scroll" id="canvas-content"></div>
     </div>
 
-    <div class="canvas-toolbar">
-        <button class="toolbar-btn" onclick="autoArrange()">&#x2728; Auto-indelen</button>
-        <button class="toolbar-btn" onclick="clearCanvas()">&#x1F5D1; Wis canvas</button>
-        <button class="toolbar-btn" onclick="exportData()">&#x1F4BE; Exporteer</button>
-        <button class="toolbar-btn" onclick="importData()">&#x1F4C2; Importeer</button>
+    <!-- === MEDEWERKERS View === -->
+    <div class="view" id="view-employees">
+        <div id="employees-list"></div>
     </div>
-</div>
 
-<!-- EMPLOYEE MODAL -->
-<div class="modal-overlay" id="employee-modal">
-    <div class="modal">
-        <h2 id="emp-modal-title">&#x1F464; Nieuwe Medewerker</h2>
-        <div class="form-group">
-            <label>Naam</label>
-            <input type="text" id="emp-name" placeholder="Jan Jansen">
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Rol</label>
-                <select id="emp-role">
-                    <option value="developer">Developer</option>
-                    <option value="designer">Designer</option>
-                    <option value="manager">Manager</option>
-                    <option value="sales">Sales</option>
-                    <option value="marketing">Marketing</option>
-                    <option value="hr">HR</option>
-                    <option value="finance">Finance</option>
-                    <option value="support">Support</option>
-                    <option value="operations">Operations</option>
-                    <option value="overig">Overig</option>
-                </select>
+    <!-- === AFDELINGEN View === -->
+    <div class="view" id="view-departments">
+        <div id="departments-list"></div>
+    </div>
+
+    <!-- === INSTELLINGEN View === -->
+    <div class="view" id="view-settings">
+        <h2 style="margin-bottom:16px;">Instellingen</h2>
+        <div class="card"><div class="card-body">
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">Data exporteren</div>
+                    <div class="setting-desc">Download als JSON bestand</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="exportData()">Exporteer</button>
             </div>
-            <div class="form-group">
-                <label>FTE (0.1 - 1.0)</label>
-                <input type="number" id="emp-fte" min="0.1" max="1.0" step="0.1" value="1.0">
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">Data importeren</div>
+                    <div class="setting-desc">Laad een eerder geëxporteerd bestand</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="importData()">Importeer</button>
             </div>
-        </div>
-        <div class="form-group">
-            <label>Kleur (voor poppetje)</label>
-            <input type="color" id="emp-color" value="#3498db" style="height:40px;">
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeModal('employee-modal')">Annuleren</button>
-            <button class="btn btn-save" id="emp-save-btn" onclick="saveEmployee()">Opslaan</button>
-        </div>
+            <div class="setting-row" style="border:none;">
+                <div>
+                    <div class="setting-label" style="color:var(--accent);">Alles wissen</div>
+                    <div class="setting-desc">Verwijder alle data en begin opnieuw</div>
+                </div>
+                <button class="btn btn-sm btn-danger" onclick="resetAll()">Wissen</button>
+            </div>
+        </div></div>
+        <div class="card"><div class="card-body">
+            <div class="setting-row" style="border:none;">
+                <div>
+                    <div class="setting-label">Demo data laden</div>
+                    <div class="setting-desc">Vul met voorbeelddata om te testen</div>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="loadDemo()">Laden</button>
+            </div>
+        </div></div>
     </div>
 </div>
 
-<!-- DEPARTMENT MODAL -->
-<div class="modal-overlay" id="dept-modal">
-    <div class="modal">
-        <h2 id="dept-modal-title">&#x1F3E0; Nieuwe Afdeling</h2>
-        <div class="form-group">
-            <label>Naam</label>
-            <input type="text" id="dept-name" placeholder="Engineering">
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Benodigde FTE</label>
-                <input type="number" id="dept-fte-needed" min="0.5" max="50" step="0.5" value="3.0">
-            </div>
-            <div class="form-group">
-                <label>Prioriteit</label>
-                <select id="dept-priority">
-                    <option value="high">Hoog</option>
-                    <option value="medium" selected>Midden</option>
-                    <option value="low">Laag</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Min. bezetting (FTE)</label>
-                <input type="number" id="dept-min" min="0" max="50" step="0.5" value="1.0">
-            </div>
-            <div class="form-group">
-                <label>Max. bezetting (FTE)</label>
-                <input type="number" id="dept-max" min="0.5" max="50" step="0.5" value="5.0">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Benodigde rollen (komma-gescheiden)</label>
-            <input type="text" id="dept-roles" placeholder="developer, designer, manager">
-        </div>
-        <div class="form-group">
-            <label>Kleur</label>
-            <input type="color" id="dept-color" value="#e74c3c" style="height:40px;">
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeModal('dept-modal')">Annuleren</button>
-            <button class="btn btn-save" id="dept-save-btn" onclick="saveDepartment()">Opslaan</button>
-        </div>
-    </div>
+<!-- FAB -->
+<button class="fab" id="fab" onclick="fabAction()">+</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottomnav">
+    <button class="nav-item active" data-view="canvas" onclick="switchView('canvas')">
+        <span class="nav-icon">&#x1F3AF;</span>Overzicht
+    </button>
+    <button class="nav-item" data-view="employees" onclick="switchView('employees')">
+        <span class="nav-icon">&#x1F464;</span>Mensen
+    </button>
+    <button class="nav-item" data-view="departments" onclick="switchView('departments')">
+        <span class="nav-icon">&#x1F3E0;</span>Afdelingen
+    </button>
+    <button class="nav-item" data-view="settings" onclick="switchView('settings')">
+        <span class="nav-icon">&#x2699;&#xFE0F;</span>Meer
+    </button>
 </div>
 
-<!-- ALLOCATION POPUP -->
-<div class="allocation-popup" id="allocation-popup">
-    <h4 id="alloc-title">FTE Verdeling</h4>
-    <div id="alloc-sliders"></div>
-    <div style="text-align:right; margin-top:10px;">
-        <button class="btn btn-cancel" onclick="closeAllocPopup()" style="font-size:0.75em;">Sluiten</button>
-    </div>
+<!-- SHEET OVERLAY -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+
+<!-- BOTTOM SHEET -->
+<div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content" id="sheet-content"></div>
 </div>
 
-<!-- IMPORT FILE INPUT (hidden) -->
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- IMPORT -->
 <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
@@ -957,1031 +700,719 @@
 let state = {
     employees: [],
     departments: [],
-    placements: [],     // { deptId, x, y } - departments on canvas
-    allocations: [],    // { empId, deptId, fte } - employee-to-dept assignments
+    allocations: [],    // { empId, deptId, fte }
     nextEmpId: 1,
     nextDeptId: 1
 };
 
-let activeTab = 'employees';
-let editingEmpId = null;
-let editingDeptId = null;
-let dragState = null;
+let currentView = 'canvas';
 
-// ===== POPPETJE SVG GENERATOR =====
-function poppetjeSVG(color, size = 40, expression = 'happy') {
+// ===== POPPETJE SVG =====
+function poppetjeSVG(color, size = 44) {
     const s = size;
-    const headR = s * 0.25;
     const cx = s / 2;
-
-    const faces = {
-        happy: `<circle cx="${cx - headR*0.25}" cy="${s*0.22}" r="${headR*0.08}" fill="#333"/>
-                <circle cx="${cx + headR*0.25}" cy="${s*0.22}" r="${headR*0.08}" fill="#333"/>
-                <path d="M${cx - headR*0.2} ${s*0.3} Q${cx} ${s*0.38} ${cx + headR*0.2} ${s*0.3}" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/>`,
-        neutral: `<circle cx="${cx - headR*0.25}" cy="${s*0.22}" r="${headR*0.08}" fill="#333"/>
-                  <circle cx="${cx + headR*0.25}" cy="${s*0.22}" r="${headR*0.08}" fill="#333"/>
-                  <line x1="${cx - headR*0.15}" y1="${s*0.31}" x2="${cx + headR*0.15}" y2="${s*0.31}" stroke="#333" stroke-width="1.2" stroke-linecap="round"/>`,
-        busy: `<line x1="${cx - headR*0.3}" y1="${s*0.2}" x2="${cx - headR*0.12}" y2="${s*0.24}" stroke="#333" stroke-width="1" stroke-linecap="round"/>
-               <line x1="${cx + headR*0.3}" y1="${s*0.2}" x2="${cx + headR*0.12}" y2="${s*0.24}" stroke="#333" stroke-width="1" stroke-linecap="round"/>
-               <circle cx="${cx - headR*0.25}" cy="${s*0.22}" r="${headR*0.06}" fill="#333"/>
-               <circle cx="${cx + headR*0.25}" cy="${s*0.22}" r="${headR*0.06}" fill="#333"/>
-               <ellipse cx="${cx}" cy="${s*0.32}" rx="${headR*0.12}" ry="${headR*0.08}" fill="#333"/>`
-    };
-
+    const hr = s * 0.22;
+    const dk = darken(color, 35);
     return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
-        <!-- Head -->
-        <circle cx="${cx}" cy="${s*0.24}" r="${headR}" fill="${color}" stroke="${darken(color, 30)}" stroke-width="1.5"/>
-        <!-- Body -->
-        <ellipse cx="${cx}" cy="${s*0.58}" rx="${s*0.2}" ry="${s*0.18}" fill="${color}" stroke="${darken(color, 30)}" stroke-width="1.5"/>
-        <!-- Legs -->
-        <line x1="${cx - s*0.08}" y1="${s*0.72}" x2="${cx - s*0.12}" y2="${s*0.92}" stroke="${darken(color, 30)}" stroke-width="2.5" stroke-linecap="round"/>
-        <line x1="${cx + s*0.08}" y1="${s*0.72}" x2="${cx + s*0.12}" y2="${s*0.92}" stroke="${darken(color, 30)}" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- Arms -->
-        <line x1="${cx - s*0.18}" y1="${s*0.52}" x2="${cx - s*0.28}" y2="${s*0.65}" stroke="${darken(color, 30)}" stroke-width="2" stroke-linecap="round"/>
-        <line x1="${cx + s*0.18}" y1="${s*0.52}" x2="${cx + s*0.28}" y2="${s*0.65}" stroke="${darken(color, 30)}" stroke-width="2" stroke-linecap="round"/>
-        <!-- Face -->
-        ${faces[expression] || faces.happy}
-        <!-- Shoes -->
-        <ellipse cx="${cx - s*0.13}" cy="${s*0.94}" rx="${s*0.05}" ry="${s*0.03}" fill="${darken(color, 50)}"/>
-        <ellipse cx="${cx + s*0.13}" cy="${s*0.94}" rx="${s*0.05}" ry="${s*0.03}" fill="${darken(color, 50)}"/>
+        <circle cx="${cx}" cy="${s*0.22}" r="${hr}" fill="${color}" stroke="${dk}" stroke-width="1.5"/>
+        <ellipse cx="${cx}" cy="${s*0.55}" rx="${s*0.22}" ry="${s*0.2}" fill="${color}" stroke="${dk}" stroke-width="1.5"/>
+        <line x1="${cx-s*0.08}" y1="${s*0.72}" x2="${cx-s*0.13}" y2="${s*0.92}" stroke="${dk}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="${cx+s*0.08}" y1="${s*0.72}" x2="${cx+s*0.13}" y2="${s*0.92}" stroke="${dk}" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="${cx-s*0.2}" y1="${s*0.5}" x2="${cx-s*0.3}" y2="${s*0.65}" stroke="${dk}" stroke-width="2" stroke-linecap="round"/>
+        <line x1="${cx+s*0.2}" y1="${s*0.5}" x2="${cx+s*0.3}" y2="${s*0.65}" stroke="${dk}" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="${cx-hr*0.3}" cy="${s*0.19}" r="${hr*0.09}" fill="#333"/>
+        <circle cx="${cx+hr*0.3}" cy="${s*0.19}" r="${hr*0.09}" fill="#333"/>
+        <path d="M${cx-hr*0.25} ${s*0.27} Q${cx} ${s*0.34} ${cx+hr*0.25} ${s*0.27}" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="${cx-s*0.14}" cy="${s*0.94}" rx="${s*0.05}" ry="${s*0.03}" fill="${dk}"/>
+        <ellipse cx="${cx+s*0.14}" cy="${s*0.94}" rx="${s*0.05}" ry="${s*0.03}" fill="${dk}"/>
     </svg>`;
 }
 
-function darken(hex, amount) {
-    hex = hex.replace('#', '');
-    let r = Math.max(0, parseInt(hex.substr(0,2), 16) - amount);
-    let g = Math.max(0, parseInt(hex.substr(2,2), 16) - amount);
-    let b = Math.max(0, parseInt(hex.substr(4,2), 16) - amount);
+function darken(hex, amt) {
+    hex = hex.replace('#','');
+    const r = Math.max(0, parseInt(hex.substr(0,2),16) - amt);
+    const g = Math.max(0, parseInt(hex.substr(2,2),16) - amt);
+    const b = Math.max(0, parseInt(hex.substr(4,2),16) - amt);
     return `rgb(${r},${g},${b})`;
 }
 
-// ===== TABS =====
-function switchTab(tab) {
-    activeTab = tab;
-    document.querySelectorAll('.sidebar-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tab);
+// ===== NAVIGATION =====
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(`view-${view}`).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+        n.classList.toggle('active', n.dataset.view === view);
     });
-    renderSidebar();
+    const fab = document.getElementById('fab');
+    fab.style.display = (view === 'settings') ? 'none' : 'flex';
+    renderView();
 }
 
-// ===== SIDEBAR RENDERING =====
-function renderSidebar() {
-    const container = document.getElementById('sidebar-content');
-
-    if (activeTab === 'employees') {
-        renderEmployeesSidebar(container);
-    } else {
-        renderDepartmentsSidebar(container);
+function fabAction() {
+    if (currentView === 'canvas') {
+        // Show pick: add dept to canvas or go to depts
+        openAddDeptToCanvas();
+    } else if (currentView === 'employees') {
+        openEmployeeSheet();
+    } else if (currentView === 'departments') {
+        openDeptSheet();
     }
 }
 
-function renderEmployeesSidebar(container) {
-    let html = `<div class="section-title">
-        <h3>Medewerkers (${state.employees.length})</h3>
-        <button class="btn btn-add" onclick="openEmployeeModal()">+ Nieuw</button>
-    </div>`;
-
-    if (state.employees.length === 0) {
-        html += `<div class="empty-state">
-            <div class="empty-icon">&#x1F9D1;&#x200D;&#x1F4BC;</div>
-            <p>Nog geen medewerkers.<br/>Klik "+ Nieuw" om er een aan te maken!</p>
-        </div>`;
-    } else {
-        state.employees.forEach(emp => {
-            const allocated = getAllocatedFTE(emp.id);
-            const remaining = Math.max(0, emp.fte - allocated);
-            const pct = emp.fte > 0 ? (allocated / emp.fte) * 100 : 0;
-            const expression = pct >= 100 ? 'busy' : pct > 0 ? 'neutral' : 'happy';
-
-            const barColor = pct >= 100 ? 'var(--accent)' : pct > 50 ? 'var(--accent4)' : 'var(--accent3)';
-
-            html += `<div class="employee-card" draggable="true"
-                          ondragstart="dragEmployee(event, ${emp.id})"
-                          ondragend="dragEnd(event)">
-                <div class="emp-actions">
-                    <button class="emp-action-btn edit" onclick="editEmployee(${emp.id})" title="Bewerken">&#x270F;</button>
-                    <button class="emp-action-btn delete" onclick="deleteEmployee(${emp.id})" title="Verwijderen">&#x2716;</button>
-                </div>
-                <div class="emp-header">
-                    <div class="emp-avatar">${poppetjeSVG(emp.color, 40, expression)}</div>
-                    <div class="emp-info">
-                        <div class="emp-name">${emp.name}</div>
-                        <div class="emp-role">${roleLabel(emp.role)}</div>
-                    </div>
-                </div>
-                <div class="emp-fte">
-                    ${allocated.toFixed(1)} / ${emp.fte.toFixed(1)} FTE toegewezen
-                    ${remaining > 0 ? `<span style="color:var(--accent3)"> (${remaining.toFixed(1)} vrij)</span>` : ''}
-                </div>
-                <div class="fte-bar">
-                    <div class="fte-bar-fill" style="width:${Math.min(pct,100)}%; background:${barColor}"></div>
-                </div>
-            </div>`;
-        });
-    }
-
-    container.innerHTML = html;
-}
-
-function renderDepartmentsSidebar(container) {
-    let html = `<div class="section-title">
-        <h3>Afdelingen (${state.departments.length})</h3>
-        <button class="btn btn-add" onclick="openDeptModal()">+ Nieuw</button>
-    </div>`;
-
-    const unplaced = state.departments.filter(d => !state.placements.find(p => p.deptId === d.id));
-    const placed = state.departments.filter(d => state.placements.find(p => p.deptId === d.id));
-
-    if (state.departments.length === 0) {
-        html += `<div class="empty-state">
-            <div class="empty-icon">&#x1F3E2;</div>
-            <p>Nog geen afdelingen.<br/>Klik "+ Nieuw" om er een aan te maken!</p>
-        </div>`;
-    } else {
-        if (unplaced.length > 0) {
-            html += `<h4 style="font-size:0.8em;opacity:0.5;margin:10px 0 6px;">&#x1F4CB; Nog niet geplaatst &mdash; sleep naar canvas</h4>`;
-            unplaced.forEach(dept => {
-                html += deptTemplateHTML(dept);
-            });
-        }
-        if (placed.length > 0) {
-            html += `<h4 style="font-size:0.8em;opacity:0.5;margin:10px 0 6px;">&#x2705; Op het canvas</h4>`;
-            placed.forEach(dept => {
-                const filled = getDeptFilledFTE(dept.id);
-                html += `<div class="dept-template" style="border-left-color:${dept.color}; opacity:0.7; cursor:default;">
-                    <div class="dept-name">${dept.name}</div>
-                    <div class="dept-meta">${filled.toFixed(1)} / ${dept.fteNeeded.toFixed(1)} FTE | Prioriteit: ${priorityLabel(dept.priority)}</div>
-                    <div style="margin-top:6px; display:flex; gap:4px;">
-                        <button class="btn btn-add" style="font-size:0.7em; padding:3px 10px;" onclick="editDepartment(${dept.id})">&#x270F; Bewerk</button>
-                        <button class="btn btn-danger" style="font-size:0.7em; padding:3px 10px;" onclick="deleteDepartment(${dept.id})">&#x2716; Verwijder</button>
-                    </div>
-                </div>`;
-            });
-        }
-    }
-
-    container.innerHTML = html;
-}
-
-function deptTemplateHTML(dept) {
-    return `<div class="dept-template" draggable="true"
-                 ondragstart="dragDepartment(event, ${dept.id})"
-                 ondragend="dragEnd(event)"
-                 style="border-left-color:${dept.color}">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="dept-name">${dept.name}</div>
-            <div style="display:flex; gap:4px;">
-                <button class="emp-action-btn edit" style="opacity:1;" onclick="event.stopPropagation(); editDepartment(${dept.id})">&#x270F;</button>
-                <button class="emp-action-btn delete" style="opacity:1;" onclick="event.stopPropagation(); deleteDepartment(${dept.id})">&#x2716;</button>
-            </div>
-        </div>
-        <div class="dept-meta">
-            ${dept.fteNeeded} FTE nodig | Prioriteit: ${priorityLabel(dept.priority)}
-            ${dept.roles.length > 0 ? ' | Rollen: ' + dept.roles.join(', ') : ''}
-        </div>
-    </div>`;
-}
-
-// ===== CANVAS RENDERING =====
-function renderCanvas() {
-    const canvas = document.getElementById('canvas');
-    const hint = document.getElementById('canvas-hint');
-
-    // Remove old departments from canvas
-    canvas.querySelectorAll('.dept-on-canvas').forEach(el => el.remove());
-
-    if (state.placements.length === 0) {
-        hint.style.display = 'block';
-    } else {
-        hint.style.display = 'none';
-    }
-
-    state.placements.forEach(placement => {
-        const dept = state.departments.find(d => d.id === placement.deptId);
-        if (!dept) return;
-
-        const el = createDeptCanvasElement(dept, placement);
-        canvas.appendChild(el);
-    });
-
-    renderConnections();
+// ===== RENDER =====
+function renderView() {
+    if (currentView === 'canvas') renderCanvas();
+    else if (currentView === 'employees') renderEmployees();
+    else if (currentView === 'departments') renderDepartments();
     updateScores();
 }
 
-function createDeptCanvasElement(dept, placement) {
-    const div = document.createElement('div');
-    div.className = 'dept-on-canvas';
-    div.id = `dept-canvas-${dept.id}`;
-    div.style.left = placement.x + 'px';
-    div.style.top = placement.y + 'px';
+function renderAll() {
+    renderView();
+    updateScores();
+}
 
-    const filledFTE = getDeptFilledFTE(dept.id);
-    const pct = dept.fteNeeded > 0 ? (filledFTE / dept.fteNeeded) * 100 : 0;
-    const barColor = pct >= 100 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
-    const allocations = state.allocations.filter(a => a.deptId === dept.id);
+// ===== CANVAS / OVERZICHT =====
+function renderCanvas() {
+    const container = document.getElementById('canvas-content');
 
-    let empHTML = '';
-    allocations.forEach(alloc => {
-        const emp = state.employees.find(e => e.id === alloc.empId);
-        if (!emp) return;
-        const totalAllocated = getAllocatedFTE(emp.id);
-        const expression = totalAllocated >= emp.fte ? 'busy' : 'neutral';
-        empHTML += `<div class="mini-poppetje" onclick="openAllocPopup(${emp.id}, event)" title="${emp.name}: ${alloc.fte} FTE">
-            ${poppetjeSVG(emp.color, 34, expression)}
-            <span class="fte-label">${alloc.fte}</span>
+    // Show departments that are "on the canvas" — in this mobile version, all departments show
+    const depts = state.departments;
+
+    if (depts.length === 0) {
+        container.innerHTML = `<div class="empty">
+            <div class="empty-icon">&#x1F3AF;</div>
+            <p>Nog geen afdelingen!<br/>Ga naar <b>Afdelingen</b> om er een aan te maken,<br/>of tik op <b>+</b></p>
         </div>`;
-    });
-
-    let rolesHTML = '';
-    if (dept.roles.length > 0) {
-        dept.roles.forEach(role => {
-            const hasRole = allocations.some(a => {
-                const emp = state.employees.find(e => e.id === a.empId);
-                return emp && emp.role === role;
-            });
-            rolesHTML += `<span class="role-tag ${hasRole ? 'filled' : 'unfilled'}">${roleLabel(role)}</span>`;
-        });
-    }
-
-    div.innerHTML = `
-        <div class="dept-roof" style="background:${dept.color}"></div>
-        <div class="dept-canvas-actions">
-            <button class="dept-canvas-btn" onclick="editDepartment(${dept.id})" title="Bewerken">&#x270F;</button>
-            <button class="dept-canvas-btn" onclick="removeDeptFromCanvas(${dept.id})" title="Van canvas halen">&#x2716;</button>
-        </div>
-        <div class="dept-body">
-            <div class="dept-title">
-                ${dept.name}
-                <span class="priority-badge priority-${dept.priority}">${priorityLabel(dept.priority)}</span>
-            </div>
-            <div class="dept-stats">
-                <div class="dept-stat">&#x1F465; ${allocations.length} personen</div>
-                <div class="dept-stat">&#x1F4CA; ${filledFTE.toFixed(1)}/${dept.fteNeeded.toFixed(1)} FTE</div>
-            </div>
-            <div class="dept-fte-bar">
-                <div class="dept-fte-fill" style="width:${Math.min(pct,100)}%; background:${barColor}"></div>
-            </div>
-            <div class="dept-fte-label">
-                <span>Min: ${dept.minFte}</span>
-                <span>${pct.toFixed(0)}%</span>
-                <span>Max: ${dept.maxFte}</span>
-            </div>
-            ${rolesHTML ? `<div class="dept-roles-needed">${rolesHTML}</div>` : ''}
-            <div class="dept-employees" id="dept-drop-${dept.id}"
-                 ondragover="dragOverDept(event, ${dept.id})"
-                 ondragleave="dragLeaveDept(event, ${dept.id})"
-                 ondrop="dropOnDept(event, ${dept.id})">
-                ${empHTML || '<span style="font-size:0.75em;opacity:0.4;">Sleep medewerkers hierheen</span>'}
-            </div>
-        </div>
-    `;
-
-    // Make department draggable on canvas
-    makeDraggable(div, placement);
-
-    return div;
-}
-
-// ===== CONNECTIONS (CURVED LINES) =====
-function renderConnections() {
-    const svg = document.getElementById('connections-svg');
-    svg.innerHTML = '';
-
-    // Remove old labels
-    document.querySelectorAll('.connection-label').forEach(el => el.remove());
-
-    // Group allocations by employee
-    const empAllocations = {};
-    state.allocations.forEach(alloc => {
-        if (!empAllocations[alloc.empId]) empAllocations[alloc.empId] = [];
-        empAllocations[alloc.empId].push(alloc);
-    });
-
-    Object.entries(empAllocations).forEach(([empId, allocs]) => {
-        if (allocs.length <= 1) return; // No lines for single assignment
-
-        const emp = state.employees.find(e => e.id === parseInt(empId));
-        if (!emp) return;
-
-        // Find primary dept (largest FTE)
-        const primary = allocs.reduce((a, b) => a.fte >= b.fte ? a : b);
-
-        allocs.forEach(alloc => {
-            if (alloc.deptId === primary.deptId) return;
-
-            const fromEl = document.getElementById(`dept-canvas-${primary.deptId}`);
-            const toEl = document.getElementById(`dept-canvas-${alloc.deptId}`);
-            if (!fromEl || !toEl) return;
-
-            const fromRect = fromEl.getBoundingClientRect();
-            const toRect = toEl.getBoundingClientRect();
-            const canvasRect = document.getElementById('canvas').getBoundingClientRect();
-
-            const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
-            const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
-            const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
-            const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
-
-            // Curved line
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2 - 50;
-
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', `M${x1},${y1} Q${midX},${midY} ${x2},${y2}`);
-            path.setAttribute('stroke', emp.color);
-            path.setAttribute('stroke-width', '2.5');
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke-dasharray', '8,4');
-            path.setAttribute('opacity', '0.7');
-            svg.appendChild(path);
-
-            // Arrow at end
-            const angle = Math.atan2(y2 - midY, x2 - midX);
-            const arrowSize = 8;
-            const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-            const ax = x2 - arrowSize * Math.cos(angle - 0.4);
-            const ay = y2 - arrowSize * Math.sin(angle - 0.4);
-            const bx = x2 - arrowSize * Math.cos(angle + 0.4);
-            const by = y2 - arrowSize * Math.sin(angle + 0.4);
-            arrowPath.setAttribute('points', `${x2},${y2} ${ax},${ay} ${bx},${by}`);
-            arrowPath.setAttribute('fill', emp.color);
-            arrowPath.setAttribute('opacity', '0.7');
-            svg.appendChild(arrowPath);
-
-            // Label
-            const label = document.createElement('div');
-            label.className = 'connection-label';
-            label.style.left = (midX - 20) + 'px';
-            label.style.top = (midY - 10) + 'px';
-            label.style.color = emp.color;
-            label.textContent = `${emp.name}: ${alloc.fte} FTE`;
-            document.getElementById('canvas').appendChild(label);
-        });
-    });
-}
-
-// ===== DRAG & DROP =====
-function dragEmployee(event, empId) {
-    event.dataTransfer.setData('type', 'employee');
-    event.dataTransfer.setData('empId', empId);
-    event.target.closest('.employee-card').classList.add('dragging');
-}
-
-function dragDepartment(event, deptId) {
-    event.dataTransfer.setData('type', 'department');
-    event.dataTransfer.setData('deptId', deptId);
-}
-
-function dragEnd(event) {
-    document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
-    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-}
-
-function dragOverDept(event, deptId) {
-    event.preventDefault();
-    const dropZone = document.getElementById(`dept-drop-${deptId}`);
-    if (dropZone) dropZone.classList.add('drag-over');
-}
-
-function dragLeaveDept(event, deptId) {
-    const dropZone = document.getElementById(`dept-drop-${deptId}`);
-    if (dropZone) dropZone.classList.remove('drag-over');
-}
-
-function dropOnDept(event, deptId) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const type = event.dataTransfer.getData('type');
-    if (type !== 'employee') return;
-
-    const empId = parseInt(event.dataTransfer.getData('empId'));
-    const emp = state.employees.find(e => e.id === empId);
-    if (!emp) return;
-
-    // Check if already allocated to this dept
-    const existing = state.allocations.find(a => a.empId === empId && a.deptId === deptId);
-    if (existing) {
-        notify('Deze medewerker zit al op deze afdeling!', 'warning');
         return;
     }
 
-    // Calculate remaining FTE
-    const allocated = getAllocatedFTE(empId);
-    const remaining = Math.round((emp.fte - allocated) * 10) / 10;
-
-    if (remaining <= 0) {
-        notify(`${emp.name} heeft geen FTE meer beschikbaar!`, 'error');
-        return;
-    }
-
-    // Default allocation: whatever remains, max 0.5 for secondary
-    const isFirstAllocation = allocated === 0;
-    const defaultFte = isFirstAllocation ? remaining : Math.min(remaining, 0.5);
-
-    state.allocations.push({ empId, deptId, fte: defaultFte });
-    saveState();
-    renderAll();
-    notify(`${emp.name} toegewezen aan ${state.departments.find(d => d.id === deptId).name} (${defaultFte} FTE)`, 'success');
-}
-
-// Canvas drop for departments
-const canvas = document.getElementById('canvas');
-canvas.addEventListener('dragover', (e) => {
-    e.preventDefault();
-});
-
-canvas.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const type = e.dataTransfer.getData('type');
-
-    if (type === 'department') {
-        const deptId = parseInt(e.dataTransfer.getData('deptId'));
-        const canvasRect = canvas.getBoundingClientRect();
-        const x = e.clientX - canvasRect.left - 100;
-        const y = e.clientY - canvasRect.top - 50;
-
-        // Check if already placed
-        const existingIdx = state.placements.findIndex(p => p.deptId === deptId);
-        if (existingIdx >= 0) {
-            state.placements[existingIdx].x = x;
-            state.placements[existingIdx].y = y;
-        } else {
-            state.placements.push({ deptId, x: Math.max(10, x), y: Math.max(10, y) });
-        }
-
-        saveState();
-        renderAll();
-    }
-});
-
-// Make department draggable on canvas
-function makeDraggable(el, placement) {
-    let isDragging = false;
-    let startX, startY, origX, origY;
-
-    el.addEventListener('mousedown', (e) => {
-        if (e.target.closest('button') || e.target.closest('.dept-employees') || e.target.closest('.mini-poppetje')) return;
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        origX = placement.x;
-        origY = placement.y;
-        el.style.zIndex = 100;
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        placement.x = Math.max(0, origX + dx);
-        placement.y = Math.max(0, origY + dy);
-        el.style.left = placement.x + 'px';
-        el.style.top = placement.y + 'px';
-        renderConnections();
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            el.style.zIndex = 10;
-            saveState();
-        }
-    });
-}
-
-// ===== ALLOCATION POPUP =====
-function openAllocPopup(empId, event) {
-    event.stopPropagation();
-    const emp = state.employees.find(e => e.id === empId);
-    if (!emp) return;
-
-    const popup = document.getElementById('allocation-popup');
-    const title = document.getElementById('alloc-title');
-    const sliders = document.getElementById('alloc-sliders');
-
-    title.innerHTML = `${poppetjeSVG(emp.color, 24, 'neutral')} ${emp.name} (${emp.fte} FTE)`;
-
-    const empAllocs = state.allocations.filter(a => a.empId === empId);
     let html = '';
+    depts.forEach(dept => {
+        const filled = getDeptFilled(dept.id);
+        const pct = dept.fteNeeded > 0 ? Math.min(100, (filled / dept.fteNeeded) * 100) : 0;
+        const barColor = pct >= 100 ? 'var(--accent3)' : pct >= 50 ? 'var(--accent4)' : 'var(--accent)';
+        const allocs = state.allocations.filter(a => a.deptId === dept.id);
 
-    empAllocs.forEach(alloc => {
-        const dept = state.departments.find(d => d.id === alloc.deptId);
-        if (!dept) return;
+        let poppetjesHTML = '';
+        allocs.forEach(a => {
+            const emp = state.employees.find(e => e.id === a.empId);
+            if (!emp) return;
+            poppetjesHTML += `<div class="canvas-poppetje" onclick="openPersonOnDept(${emp.id}, ${dept.id})">
+                ${poppetjeSVG(emp.color, 40)}
+                <span class="p-fte">${a.fte}</span>
+            </div>`;
+        });
 
-        html += `<div class="alloc-slider-row">
-            <span class="alloc-dept" style="color:${dept.color}">${dept.name}</span>
-            <input type="range" min="0" max="${emp.fte * 10}" step="1" value="${alloc.fte * 10}"
-                   oninput="updateAllocation(${empId}, ${alloc.deptId}, this.value / 10, this)"
-                   style="accent-color:${dept.color}">
-            <span class="alloc-value" id="alloc-val-${empId}-${alloc.deptId}">${alloc.fte.toFixed(1)}</span>
-            <button class="emp-action-btn delete" style="opacity:1; width:18px; height:18px; font-size:9px;"
-                    onclick="removeAllocation(${empId}, ${alloc.deptId})">&#x2716;</button>
+        // Add button
+        poppetjesHTML += `<div class="add-person-btn" onclick="openPickEmployee(${dept.id})">+</div>`;
+
+        // Roles
+        let rolesHTML = '';
+        if (dept.roles.length > 0) {
+            dept.roles.forEach(role => {
+                const has = allocs.some(a => {
+                    const emp = state.employees.find(e => e.id === a.empId);
+                    return emp && emp.role === role;
+                });
+                rolesHTML += `<span class="badge ${has ? 'badge-filled' : 'badge-unfilled'}">${roleLabel(role)}</span>`;
+            });
+        }
+
+        html += `<div class="canvas-dept">
+            <div class="card-color-bar" style="background:${dept.color}"></div>
+            <div class="canvas-dept-header" onclick="openDeptSheet(${dept.id})">
+                <div>
+                    <div class="canvas-dept-title">${dept.name}</div>
+                    <div class="card-sub">${filled.toFixed(1)} / ${dept.fteNeeded.toFixed(1)} FTE &nbsp; <span class="badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span></div>
+                </div>
+                <span style="color:#ccc;font-size:1.2em;">&#x270F;</span>
+            </div>
+            <div class="canvas-dept-body">
+                <div class="fte-bar">
+                    <div class="fte-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+                <div class="fte-info">
+                    <span>Min: ${dept.minFte}</span>
+                    <span>${pct.toFixed(0)}%</span>
+                    <span>Max: ${dept.maxFte}</span>
+                </div>
+                ${rolesHTML ? `<div class="badges-row">${rolesHTML}</div>` : ''}
+                <div class="canvas-poppetjes">${poppetjesHTML}</div>
+            </div>
         </div>`;
     });
 
-    const totalAlloc = empAllocs.reduce((sum, a) => sum + a.fte, 0);
-    html += `<div style="font-size:0.8em; margin-top:8px; padding-top:8px; border-top:1px solid #eee;">
-        Toegewezen: <strong>${totalAlloc.toFixed(1)}</strong> / ${emp.fte.toFixed(1)} FTE
-        ${totalAlloc < emp.fte ? `<span style="color:var(--accent3)"> (${(emp.fte - totalAlloc).toFixed(1)} vrij)</span>` : ''}
-    </div>`;
-
-    sliders.innerHTML = html;
-
-    // Position popup
-    popup.style.left = event.clientX + 'px';
-    popup.style.top = event.clientY + 'px';
-    popup.classList.add('show');
-
-    // Close on outside click
-    setTimeout(() => {
-        document.addEventListener('click', closeAllocOnOutside);
-    }, 100);
+    container.innerHTML = html;
 }
 
-function closeAllocOnOutside(e) {
-    const popup = document.getElementById('allocation-popup');
-    if (!popup.contains(e.target)) {
-        closeAllocPopup();
+// ===== EMPLOYEES VIEW =====
+function renderEmployees() {
+    const container = document.getElementById('employees-list');
+
+    if (state.employees.length === 0) {
+        container.innerHTML = `<div class="empty">
+            <div class="empty-icon">&#x1F9D1;&#x200D;&#x1F4BC;</div>
+            <p>Nog geen medewerkers!<br/>Tik op <b>+</b> om iemand toe te voegen.</p>
+        </div>`;
+        return;
     }
-}
 
-function closeAllocPopup() {
-    document.getElementById('allocation-popup').classList.remove('show');
-    document.removeEventListener('click', closeAllocOnOutside);
-}
+    let html = '';
+    state.employees.forEach(emp => {
+        const allocated = getAllocatedFTE(emp.id);
+        const remaining = Math.round((emp.fte - allocated) * 10) / 10;
+        const pct = emp.fte > 0 ? Math.min(100, (allocated / emp.fte) * 100) : 0;
+        const barColor = pct >= 100 ? 'var(--accent)' : pct > 50 ? 'var(--accent4)' : 'var(--accent3)';
 
-function updateAllocation(empId, deptId, newFte, slider) {
-    const emp = state.employees.find(e => e.id === empId);
-    if (!emp) return;
-
-    // Calculate total allocated to other depts
-    const otherAlloc = state.allocations
-        .filter(a => a.empId === empId && a.deptId !== deptId)
-        .reduce((sum, a) => sum + a.fte, 0);
-
-    const maxAllowable = Math.round((emp.fte - otherAlloc) * 10) / 10;
-    newFte = Math.min(newFte, maxAllowable);
-    newFte = Math.round(newFte * 10) / 10;
-
-    if (slider) slider.value = newFte * 10;
-
-    const alloc = state.allocations.find(a => a.empId === empId && a.deptId === deptId);
-    if (alloc) {
-        if (newFte <= 0) {
-            removeAllocation(empId, deptId);
-            return;
+        // Where is this person?
+        const allocs = state.allocations.filter(a => a.empId === emp.id);
+        let whereHTML = '';
+        if (allocs.length > 0) {
+            whereHTML = '<div class="badges-row">';
+            allocs.forEach(a => {
+                const dept = state.departments.find(d => d.id === a.deptId);
+                if (dept) whereHTML += `<span class="connection-badge" style="border-left:3px solid ${dept.color}">${dept.name}: ${a.fte}</span>`;
+            });
+            whereHTML += '</div>';
         }
-        alloc.fte = newFte;
+
+        html += `<div class="card" onclick="openEmployeeSheet(${emp.id})">
+            <div class="card-color-bar" style="background:${emp.color}"></div>
+            <div class="card-body">
+                <div class="card-header">
+                    <div class="poppetje">${poppetjeSVG(emp.color, 44)}</div>
+                    <div style="flex:1">
+                        <div class="card-title">${emp.name}</div>
+                        <div class="card-sub">${roleLabel(emp.role)} &bull; ${emp.fte} FTE ${remaining > 0 ? `&bull; <span style="color:var(--accent3)">${remaining} vrij</span>` : ''}</div>
+                    </div>
+                </div>
+                <div class="fte-bar">
+                    <div class="fte-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+                ${whereHTML}
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// ===== DEPARTMENTS VIEW =====
+function renderDepartments() {
+    const container = document.getElementById('departments-list');
+
+    if (state.departments.length === 0) {
+        container.innerHTML = `<div class="empty">
+            <div class="empty-icon">&#x1F3E2;</div>
+            <p>Nog geen afdelingen!<br/>Tik op <b>+</b> om er een aan te maken.</p>
+        </div>`;
+        return;
     }
 
-    document.getElementById(`alloc-val-${empId}-${deptId}`).textContent = newFte.toFixed(1);
-    saveState();
-    renderAll();
+    let html = '';
+    state.departments.forEach(dept => {
+        const filled = getDeptFilled(dept.id);
+        const pct = dept.fteNeeded > 0 ? Math.min(100, (filled / dept.fteNeeded) * 100) : 0;
+        const barColor = pct >= 100 ? 'var(--accent3)' : pct >= 50 ? 'var(--accent4)' : 'var(--accent)';
 
-    // Re-open popup to refresh totals
-    // Not ideal but keeps it simple
+        html += `<div class="card" onclick="openDeptSheet(${dept.id})">
+            <div class="card-color-bar" style="background:${dept.color}"></div>
+            <div class="card-body">
+                <div class="card-header">
+                    <div class="card-title">${dept.name}</div>
+                    <span class="badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
+                </div>
+                <div class="card-sub" style="margin-top:4px;">${filled.toFixed(1)} / ${dept.fteNeeded.toFixed(1)} FTE &bull; Rollen: ${dept.roles.length > 0 ? dept.roles.map(roleLabel).join(', ') : 'Geen'}</div>
+                <div class="fte-bar">
+                    <div class="fte-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
 }
 
-function removeAllocation(empId, deptId) {
-    state.allocations = state.allocations.filter(a => !(a.empId === empId && a.deptId === deptId));
-    closeAllocPopup();
-    saveState();
-    renderAll();
-}
-
-// ===== EMPLOYEE CRUD =====
-function openEmployeeModal(empId) {
-    editingEmpId = empId || null;
-    const modal = document.getElementById('employee-modal');
-    const title = document.getElementById('emp-modal-title');
-
-    if (empId) {
-        const emp = state.employees.find(e => e.id === empId);
-        title.textContent = '✏️ Medewerker Bewerken';
-        document.getElementById('emp-name').value = emp.name;
-        document.getElementById('emp-role').value = emp.role;
-        document.getElementById('emp-fte').value = emp.fte;
-        document.getElementById('emp-color').value = emp.color;
-    } else {
-        title.textContent = '👤 Nieuwe Medewerker';
-        document.getElementById('emp-name').value = '';
-        document.getElementById('emp-role').value = 'developer';
-        document.getElementById('emp-fte').value = '1.0';
-        // Random color
-        const colors = ['#3498db', '#e74c3c', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c', '#e67e22', '#34495e'];
-        document.getElementById('emp-color').value = colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    modal.classList.add('show');
-    document.getElementById('emp-name').focus();
-}
-
-function saveEmployee() {
-    const name = document.getElementById('emp-name').value.trim();
-    const role = document.getElementById('emp-role').value;
-    const fte = parseFloat(document.getElementById('emp-fte').value);
-    const color = document.getElementById('emp-color').value;
-
-    if (!name) { notify('Vul een naam in!', 'error'); return; }
-    if (isNaN(fte) || fte < 0.1 || fte > 1.0) { notify('FTE moet tussen 0.1 en 1.0 zijn!', 'error'); return; }
-
-    if (editingEmpId) {
-        const emp = state.employees.find(e => e.id === editingEmpId);
-        emp.name = name;
-        emp.role = role;
-        emp.fte = fte;
-        emp.color = color;
-
-        // Adjust allocations if FTE decreased
-        adjustAllocations(emp.id, fte);
-    } else {
-        state.employees.push({
-            id: state.nextEmpId++,
-            name, role, fte, color
-        });
-    }
-
-    closeModal('employee-modal');
-    saveState();
-    renderAll();
-}
-
-function editEmployee(empId) {
-    openEmployeeModal(empId);
-}
-
-function deleteEmployee(empId) {
-    const emp = state.employees.find(e => e.id === empId);
-    if (!confirm(`Weet je zeker dat je "${emp.name}" wilt verwijderen?`)) return;
-
-    state.employees = state.employees.filter(e => e.id !== empId);
-    state.allocations = state.allocations.filter(a => a.empId !== empId);
-    saveState();
-    renderAll();
-}
-
-// ===== DEPARTMENT CRUD =====
-function openDeptModal(deptId) {
-    editingDeptId = deptId || null;
-    const modal = document.getElementById('dept-modal');
-    const title = document.getElementById('dept-modal-title');
-
-    if (deptId) {
-        const dept = state.departments.find(d => d.id === deptId);
-        title.textContent = '✏️ Afdeling Bewerken';
-        document.getElementById('dept-name').value = dept.name;
-        document.getElementById('dept-fte-needed').value = dept.fteNeeded;
-        document.getElementById('dept-priority').value = dept.priority;
-        document.getElementById('dept-min').value = dept.minFte;
-        document.getElementById('dept-max').value = dept.maxFte;
-        document.getElementById('dept-roles').value = dept.roles.join(', ');
-        document.getElementById('dept-color').value = dept.color;
-    } else {
-        title.textContent = '🏠 Nieuwe Afdeling';
-        document.getElementById('dept-name').value = '';
-        document.getElementById('dept-fte-needed').value = '3.0';
-        document.getElementById('dept-priority').value = 'medium';
-        document.getElementById('dept-min').value = '1.0';
-        document.getElementById('dept-max').value = '5.0';
-        document.getElementById('dept-roles').value = '';
-        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f39c12', '#1abc9c', '#e67e22', '#2c3e50'];
-        document.getElementById('dept-color').value = colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    modal.classList.add('show');
-    document.getElementById('dept-name').focus();
-}
-
-function saveDepartment() {
-    const name = document.getElementById('dept-name').value.trim();
-    const fteNeeded = parseFloat(document.getElementById('dept-fte-needed').value);
-    const priority = document.getElementById('dept-priority').value;
-    const minFte = parseFloat(document.getElementById('dept-min').value);
-    const maxFte = parseFloat(document.getElementById('dept-max').value);
-    const rolesStr = document.getElementById('dept-roles').value;
-    const color = document.getElementById('dept-color').value;
-
-    if (!name) { notify('Vul een naam in!', 'error'); return; }
-    if (isNaN(fteNeeded) || fteNeeded < 0.5) { notify('Benodigde FTE moet minimaal 0.5 zijn!', 'error'); return; }
-
-    const roles = rolesStr.split(',').map(r => r.trim().toLowerCase()).filter(r => r);
-
-    if (editingDeptId) {
-        const dept = state.departments.find(d => d.id === editingDeptId);
-        dept.name = name;
-        dept.fteNeeded = fteNeeded;
-        dept.priority = priority;
-        dept.minFte = minFte;
-        dept.maxFte = maxFte;
-        dept.roles = roles;
-        dept.color = color;
-    } else {
-        state.departments.push({
-            id: state.nextDeptId++,
-            name, fteNeeded, priority, minFte, maxFte, roles, color
-        });
-    }
-
-    closeModal('dept-modal');
-    saveState();
-    renderAll();
-}
-
-function editDepartment(deptId) {
-    openDeptModal(deptId);
-}
-
-function deleteDepartment(deptId) {
-    const dept = state.departments.find(d => d.id === deptId);
-    if (!confirm(`Weet je zeker dat je "${dept.name}" wilt verwijderen?`)) return;
-
-    state.departments = state.departments.filter(d => d.id !== deptId);
-    state.placements = state.placements.filter(p => p.deptId !== deptId);
-    state.allocations = state.allocations.filter(a => a.deptId !== deptId);
-    saveState();
-    renderAll();
-}
-
-function removeDeptFromCanvas(deptId) {
-    state.placements = state.placements.filter(p => p.deptId !== deptId);
-    // Keep allocations - user might place it back
-    saveState();
-    renderAll();
-}
-
-// ===== SCORING =====
+// ===== SCORES =====
 function updateScores() {
-    let totalScore = 0;
-    let totalNeeded = 0;
-    let totalFilled = 0;
-    let gaps = 0;
+    const mult = { high: 3, medium: 2, low: 1 };
+    let score = 0, totalNeeded = 0, totalFilled = 0, gaps = 0;
 
-    const priorityMultiplier = { high: 3, medium: 2, low: 1 };
-
-    state.placements.forEach(placement => {
-        const dept = state.departments.find(d => d.id === placement.deptId);
-        if (!dept) return;
-
-        const filled = getDeptFilledFTE(dept.id);
+    state.departments.forEach(dept => {
+        const filled = getDeptFilled(dept.id);
         totalNeeded += dept.fteNeeded;
         totalFilled += Math.min(filled, dept.fteNeeded);
 
         const fillPct = dept.fteNeeded > 0 ? filled / dept.fteNeeded : 1;
-        const mult = priorityMultiplier[dept.priority] || 1;
+        const m = mult[dept.priority] || 1;
+        score += Math.round(fillPct * 100 * m);
 
-        // Score: 100 points per dept * fill% * priority multiplier
-        totalScore += Math.round(fillPct * 100 * mult);
-
-        // Penalty for underfilling below minimum
         if (filled < dept.minFte) {
-            const underPct = (dept.minFte - filled) / dept.minFte;
-            totalScore -= Math.round(underPct * 50 * mult);
+            score -= Math.round(((dept.minFte - filled) / dept.minFte) * 50 * m);
             gaps++;
         }
-
-        // Small penalty for overfilling
-        if (filled > dept.maxFte) {
-            totalScore -= Math.round((filled - dept.maxFte) * 10);
-        }
-
-        // Gap if below needed
+        if (filled > dept.maxFte) score -= Math.round((filled - dept.maxFte) * 10);
         if (filled < dept.fteNeeded) gaps++;
     });
 
-    totalScore = Math.max(0, totalScore);
-
+    score = Math.max(0, score);
     const fillRate = totalNeeded > 0 ? Math.round((totalFilled / totalNeeded) * 100) : 0;
-    const freeFTE = state.employees.reduce((sum, e) => sum + e.fte, 0) -
-                    state.allocations.reduce((sum, a) => sum + a.fte, 0);
 
-    document.getElementById('total-score').textContent = totalScore;
-    document.getElementById('total-score').className = `value ${totalScore > 300 ? 'good' : totalScore > 100 ? 'warn' : 'bad'}`;
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('fill-val').textContent = fillRate + '%';
+    document.getElementById('gaps-val').textContent = gaps;
 
-    document.getElementById('fill-rate').textContent = fillRate + '%';
-    document.getElementById('fill-rate').className = `value ${fillRate >= 80 ? 'good' : fillRate >= 50 ? 'warn' : 'bad'}`;
+    const ps = document.getElementById('pill-score');
+    ps.className = `pill ${score > 300 ? 'good' : score > 100 ? 'warn' : 'bad'}`;
+    const pf = document.getElementById('pill-fill');
+    pf.className = `pill ${fillRate >= 80 ? 'good' : fillRate >= 50 ? 'warn' : 'bad'}`;
+    const pg = document.getElementById('pill-gaps');
+    pg.className = `pill ${gaps === 0 ? 'good' : gaps <= 2 ? 'warn' : 'bad'}`;
+}
 
-    document.getElementById('gaps-count').textContent = gaps;
-    document.getElementById('gaps-count').className = `value ${gaps === 0 ? 'good' : gaps <= 2 ? 'warn' : 'bad'}`;
+// ===== BOTTOM SHEETS =====
+function openSheet(html) {
+    document.getElementById('sheet-content').innerHTML = html;
+    document.getElementById('sheet-overlay').classList.add('show');
+    setTimeout(() => document.getElementById('sheet').classList.add('show'), 10);
+}
 
-    document.getElementById('free-fte').textContent = freeFTE.toFixed(1);
-    document.getElementById('free-fte').className = `value ${freeFTE > 0 ? 'warn' : 'good'}`;
+function closeSheet() {
+    document.getElementById('sheet').classList.remove('show');
+    setTimeout(() => document.getElementById('sheet-overlay').classList.remove('show'), 300);
+}
+
+// -- Employee Sheet --
+function openEmployeeSheet(empId) {
+    const emp = empId ? state.employees.find(e => e.id === empId) : null;
+    const colors = ['#3498db','#e74c3c','#2ecc71','#9b59b6','#f39c12','#1abc9c','#e67e22','#34495e','#e91e63','#00bcd4'];
+    const selColor = emp ? emp.color : colors[Math.floor(Math.random() * colors.length)];
+
+    let colorDots = colors.map(c =>
+        `<div class="color-dot ${c === selColor ? 'selected' : ''}" style="background:${c}" onclick="selectColor(this, '${c}')"></div>`
+    ).join('');
+
+    let deleteBtn = emp ? `<button class="btn btn-danger" style="margin-top:12px;" onclick="deleteEmployee(${emp.id})">Verwijderen</button>` : '';
+
+    openSheet(`
+        <h2>${emp ? '&#x270F; ' + emp.name : '&#x1F464; Nieuwe Medewerker'}</h2>
+        <div class="form-group">
+            <label>Naam</label>
+            <input type="text" id="f-emp-name" value="${emp ? emp.name : ''}" placeholder="Jan Jansen">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Rol</label>
+                <select id="f-emp-role">
+                    ${['developer','designer','manager','sales','marketing','hr','finance','support','operations','overig']
+                        .map(r => `<option value="${r}" ${emp && emp.role === r ? 'selected' : ''}>${roleLabel(r)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>FTE</label>
+                <input type="number" id="f-emp-fte" min="0.1" max="1.0" step="0.1" value="${emp ? emp.fte : 1.0}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Kleur</label>
+            <div class="color-row" id="f-emp-colors">${colorDots}</div>
+            <input type="hidden" id="f-emp-color" value="${selColor}">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-success" onclick="saveEmployee(${emp ? emp.id : 'null'})">Opslaan</button>
+        </div>
+        ${deleteBtn}
+    `);
+}
+
+function selectColor(el, color) {
+    document.querySelectorAll('#f-emp-colors .color-dot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('f-emp-color').value = color;
+}
+
+function saveEmployee(empId) {
+    const name = document.getElementById('f-emp-name').value.trim();
+    const role = document.getElementById('f-emp-role').value;
+    const fte = parseFloat(document.getElementById('f-emp-fte').value);
+    const color = document.getElementById('f-emp-color').value;
+
+    if (!name) { toast('Vul een naam in!', 'error'); return; }
+    if (isNaN(fte) || fte < 0.1 || fte > 1.0) { toast('FTE moet 0.1 - 1.0 zijn!', 'error'); return; }
+
+    if (empId) {
+        const emp = state.employees.find(e => e.id === empId);
+        emp.name = name; emp.role = role; emp.fte = fte; emp.color = color;
+        adjustAllocations(empId, fte);
+    } else {
+        state.employees.push({ id: state.nextEmpId++, name, role, fte, color });
+    }
+
+    closeSheet();
+    saveState();
+    renderAll();
+    toast(empId ? 'Medewerker bijgewerkt' : 'Medewerker toegevoegd!', 'success');
+}
+
+function deleteEmployee(empId) {
+    const emp = state.employees.find(e => e.id === empId);
+    if (!confirm(`"${emp.name}" verwijderen?`)) return;
+    state.employees = state.employees.filter(e => e.id !== empId);
+    state.allocations = state.allocations.filter(a => a.empId !== empId);
+    closeSheet();
+    saveState();
+    renderAll();
+    toast('Verwijderd', 'success');
+}
+
+// -- Department Sheet --
+function openDeptSheet(deptId) {
+    const dept = deptId ? state.departments.find(d => d.id === deptId) : null;
+    const colors = ['#e74c3c','#3498db','#2ecc71','#9b59b6','#f39c12','#1abc9c','#e67e22','#34495e','#e91e63','#795548'];
+    const selColor = dept ? dept.color : colors[Math.floor(Math.random() * colors.length)];
+
+    let colorDots = colors.map(c =>
+        `<div class="color-dot ${c === selColor ? 'selected' : ''}" style="background:${c}" onclick="selectDeptColor(this, '${c}')"></div>`
+    ).join('');
+
+    let deleteBtn = dept ? `<button class="btn btn-danger" style="margin-top:12px;" onclick="deleteDepartment(${dept.id})">Verwijderen</button>` : '';
+
+    openSheet(`
+        <h2>${dept ? '&#x270F; ' + dept.name : '&#x1F3E0; Nieuwe Afdeling'}</h2>
+        <div class="form-group">
+            <label>Naam</label>
+            <input type="text" id="f-dept-name" value="${dept ? dept.name : ''}" placeholder="Engineering">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Benodigde FTE</label>
+                <input type="number" id="f-dept-fte" min="0.5" max="50" step="0.5" value="${dept ? dept.fteNeeded : 3}">
+            </div>
+            <div class="form-group">
+                <label>Prioriteit</label>
+                <select id="f-dept-prio">
+                    <option value="high" ${dept && dept.priority === 'high' ? 'selected' : ''}>Hoog</option>
+                    <option value="medium" ${!dept || dept.priority === 'medium' ? 'selected' : ''}>Midden</option>
+                    <option value="low" ${dept && dept.priority === 'low' ? 'selected' : ''}>Laag</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Min. FTE</label>
+                <input type="number" id="f-dept-min" min="0" max="50" step="0.5" value="${dept ? dept.minFte : 1}">
+            </div>
+            <div class="form-group">
+                <label>Max. FTE</label>
+                <input type="number" id="f-dept-max" min="0.5" max="50" step="0.5" value="${dept ? dept.maxFte : 5}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Rollen (komma-gescheiden)</label>
+            <input type="text" id="f-dept-roles" value="${dept ? dept.roles.join(', ') : ''}" placeholder="developer, designer">
+        </div>
+        <div class="form-group">
+            <label>Kleur</label>
+            <div class="color-row" id="f-dept-colors">${colorDots}</div>
+            <input type="hidden" id="f-dept-color" value="${selColor}">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-success" onclick="saveDepartment(${dept ? dept.id : 'null'})">Opslaan</button>
+        </div>
+        ${deleteBtn}
+    `);
+}
+
+function selectDeptColor(el, color) {
+    document.querySelectorAll('#f-dept-colors .color-dot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('f-dept-color').value = color;
+}
+
+function saveDepartment(deptId) {
+    const name = document.getElementById('f-dept-name').value.trim();
+    const fteNeeded = parseFloat(document.getElementById('f-dept-fte').value);
+    const priority = document.getElementById('f-dept-prio').value;
+    const minFte = parseFloat(document.getElementById('f-dept-min').value);
+    const maxFte = parseFloat(document.getElementById('f-dept-max').value);
+    const roles = document.getElementById('f-dept-roles').value.split(',').map(r => r.trim().toLowerCase()).filter(r => r);
+    const color = document.getElementById('f-dept-color').value;
+
+    if (!name) { toast('Vul een naam in!', 'error'); return; }
+    if (isNaN(fteNeeded) || fteNeeded < 0.5) { toast('FTE moet minimaal 0.5 zijn!', 'error'); return; }
+
+    if (deptId) {
+        const dept = state.departments.find(d => d.id === deptId);
+        Object.assign(dept, { name, fteNeeded, priority, minFte, maxFte, roles, color });
+    } else {
+        state.departments.push({ id: state.nextDeptId++, name, fteNeeded, priority, minFte, maxFte, roles, color });
+    }
+
+    closeSheet();
+    saveState();
+    renderAll();
+    toast(deptId ? 'Afdeling bijgewerkt' : 'Afdeling toegevoegd!', 'success');
+}
+
+function deleteDepartment(deptId) {
+    const dept = state.departments.find(d => d.id === deptId);
+    if (!confirm(`"${dept.name}" verwijderen?`)) return;
+    state.departments = state.departments.filter(d => d.id !== deptId);
+    state.allocations = state.allocations.filter(a => a.deptId !== deptId);
+    closeSheet();
+    saveState();
+    renderAll();
+    toast('Verwijderd', 'success');
+}
+
+// -- Pick employee to add to dept --
+function openPickEmployee(deptId) {
+    const dept = state.departments.find(d => d.id === deptId);
+    const existing = state.allocations.filter(a => a.deptId === deptId).map(a => a.empId);
+
+    if (state.employees.length === 0) {
+        toast('Maak eerst medewerkers aan!', 'warning');
+        return;
+    }
+
+    let html = `<h2>&#x1F464; Kies medewerker voor ${dept.name}</h2>`;
+
+    state.employees.forEach(emp => {
+        const alreadyHere = existing.includes(emp.id);
+        const allocated = getAllocatedFTE(emp.id);
+        const remaining = Math.round((emp.fte - allocated) * 10) / 10;
+        const disabled = alreadyHere || remaining <= 0;
+
+        html += `<div class="pick-item ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `pickEmployee(${emp.id}, ${deptId})`}">
+            <div class="poppetje-small">${poppetjeSVG(emp.color, 32)}</div>
+            <div class="pick-item-info">
+                <div class="pick-item-name">${emp.name}</div>
+                <div class="pick-item-meta">${roleLabel(emp.role)} &bull; ${remaining > 0 ? remaining + ' FTE vrij' : alreadyHere ? 'Al toegewezen' : 'Geen FTE vrij'}</div>
+            </div>
+        </div>`;
+    });
+
+    openSheet(html);
+}
+
+function pickEmployee(empId, deptId) {
+    closeSheet();
+    // Open FTE picker
+    setTimeout(() => openFTEPicker(empId, deptId), 350);
+}
+
+// -- FTE Picker --
+function openFTEPicker(empId, deptId, existingAlloc) {
+    const emp = state.employees.find(e => e.id === empId);
+    const dept = state.departments.find(d => d.id === deptId);
+    const otherAlloc = state.allocations
+        .filter(a => a.empId === empId && a.deptId !== deptId)
+        .reduce((s, a) => s + a.fte, 0);
+    const maxFte = Math.round((emp.fte - otherAlloc) * 10) / 10;
+    const currentFte = existingAlloc ? existingAlloc.fte : Math.min(maxFte, 0.5);
+
+    openSheet(`
+        <h2 style="text-align:center;">${emp.name}</h2>
+        <p style="text-align:center;color:#999;margin-bottom:8px;">${roleLabel(emp.role)} &#x2192; ${dept.name}</p>
+        <div style="text-align:center;margin:12px 0;">${poppetjeSVG(emp.color, 64)}</div>
+        <p style="text-align:center;font-size:0.85em;color:#999;">Hoeveel FTE op deze afdeling?<br/>Max beschikbaar: ${maxFte}</p>
+        <div class="fte-stepper">
+            <button class="fte-stepper-btn" onclick="stepFTE(-0.1)">−</button>
+            <div class="fte-stepper-value" id="fte-pick-val">${currentFte.toFixed(1)}</div>
+            <button class="fte-stepper-btn" onclick="stepFTE(0.1)">+</button>
+        </div>
+        <input type="hidden" id="fte-pick-emp" value="${empId}">
+        <input type="hidden" id="fte-pick-dept" value="${deptId}">
+        <input type="hidden" id="fte-pick-max" value="${maxFte}">
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            ${existingAlloc ? `<button class="btn btn-danger" style="flex:0.6" onclick="removeAlloc(${empId},${deptId})">&#x1F5D1;</button>` : ''}
+            <button class="btn btn-success" onclick="confirmFTE()">Bevestigen</button>
+        </div>
+    `);
+}
+
+function stepFTE(delta) {
+    const el = document.getElementById('fte-pick-val');
+    const max = parseFloat(document.getElementById('fte-pick-max').value);
+    let val = parseFloat(el.textContent) + delta;
+    val = Math.round(val * 10) / 10;
+    val = Math.max(0.1, Math.min(max, val));
+    el.textContent = val.toFixed(1);
+}
+
+function confirmFTE() {
+    const empId = parseInt(document.getElementById('fte-pick-emp').value);
+    const deptId = parseInt(document.getElementById('fte-pick-dept').value);
+    const fte = parseFloat(document.getElementById('fte-pick-val').textContent);
+
+    const existing = state.allocations.find(a => a.empId === empId && a.deptId === deptId);
+    if (existing) {
+        existing.fte = fte;
+    } else {
+        state.allocations.push({ empId, deptId, fte });
+    }
+
+    closeSheet();
+    saveState();
+    renderAll();
+
+    const emp = state.employees.find(e => e.id === empId);
+    const dept = state.departments.find(d => d.id === deptId);
+    toast(`${emp.name} → ${dept.name} (${fte} FTE)`, 'success');
+}
+
+function removeAlloc(empId, deptId) {
+    state.allocations = state.allocations.filter(a => !(a.empId === empId && a.deptId === deptId));
+    closeSheet();
+    saveState();
+    renderAll();
+    toast('Toewijzing verwijderd', 'success');
+}
+
+// -- Person on dept (edit allocation) --
+function openPersonOnDept(empId, deptId) {
+    const alloc = state.allocations.find(a => a.empId === empId && a.deptId === deptId);
+    if (alloc) {
+        openFTEPicker(empId, deptId, alloc);
+    }
+}
+
+// -- Add dept from canvas fab --
+function openAddDeptToCanvas() {
+    if (state.departments.length === 0) {
+        openDeptSheet();
+        return;
+    }
+    // Just open new dept sheet since all depts show on canvas in mobile
+    openDeptSheet();
 }
 
 // ===== HELPERS =====
 function getAllocatedFTE(empId) {
-    return state.allocations
-        .filter(a => a.empId === empId)
-        .reduce((sum, a) => sum + a.fte, 0);
+    return state.allocations.filter(a => a.empId === empId).reduce((s, a) => s + a.fte, 0);
 }
 
-function getDeptFilledFTE(deptId) {
-    return state.allocations
-        .filter(a => a.deptId === deptId)
-        .reduce((sum, a) => sum + a.fte, 0);
+function getDeptFilled(deptId) {
+    return state.allocations.filter(a => a.deptId === deptId).reduce((s, a) => s + a.fte, 0);
 }
 
 function adjustAllocations(empId, maxFte) {
     const allocs = state.allocations.filter(a => a.empId === empId);
-    const total = allocs.reduce((sum, a) => sum + a.fte, 0);
+    const total = allocs.reduce((s, a) => s + a.fte, 0);
     if (total <= maxFte) return;
-
-    // Proportionally reduce
     const ratio = maxFte / total;
-    allocs.forEach(alloc => {
-        alloc.fte = Math.round(alloc.fte * ratio * 10) / 10;
-    });
+    allocs.forEach(a => { a.fte = Math.round(a.fte * ratio * 10) / 10; });
 }
 
-function roleLabel(role) {
-    const labels = {
-        developer: 'Developer', designer: 'Designer', manager: 'Manager',
-        sales: 'Sales', marketing: 'Marketing', hr: 'HR',
-        finance: 'Finance', support: 'Support', operations: 'Operations', overig: 'Overig'
-    };
-    return labels[role] || role;
+function roleLabel(r) {
+    return { developer:'Developer', designer:'Designer', manager:'Manager', sales:'Sales',
+             marketing:'Marketing', hr:'HR', finance:'Finance', support:'Support',
+             operations:'Operations', overig:'Overig' }[r] || r;
 }
 
 function priorityLabel(p) {
-    return { high: 'Hoog', medium: 'Midden', low: 'Laag' }[p] || p;
+    return { high:'Hoog', medium:'Midden', low:'Laag' }[p] || p;
 }
 
-function closeModal(id) {
-    document.getElementById(id).classList.remove('show');
-    editingEmpId = null;
-    editingDeptId = null;
+// ===== TOAST =====
+function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type}`;
+    setTimeout(() => el.classList.add('show'), 10);
+    setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-function renderAll() {
-    renderSidebar();
-    renderCanvas();
+// ===== STORAGE =====
+function saveState() {
+    try { localStorage.setItem('wiezittwaar', JSON.stringify(state)); } catch(e) {}
 }
 
-// ===== TOOLBAR ACTIONS =====
-function autoArrange() {
-    const placed = state.placements;
-    if (placed.length === 0) return;
-
-    const canvasRect = document.getElementById('canvas').getBoundingClientRect();
-    const cols = Math.ceil(Math.sqrt(placed.length));
-    const spacing = 30;
-    const cardW = 240;
-    const cardH = 260;
-
-    const startX = 40;
-    const startY = 40;
-
-    placed.forEach((p, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        p.x = startX + col * (cardW + spacing);
-        p.y = startY + row * (cardH + spacing);
-    });
-
-    saveState();
-    renderAll();
-    notify('Afdelingen automatisch ingedeeld!', 'success');
+function loadState() {
+    try {
+        const s = localStorage.getItem('wiezittwaar');
+        if (s) state = JSON.parse(s);
+    } catch(e) {}
 }
 
-function clearCanvas() {
-    if (!confirm('Weet je zeker dat je het canvas wilt legen? Afdelingen worden terug naar de lijst gezet.')) return;
-    state.placements = [];
-    state.allocations = [];
-    saveState();
-    renderAll();
-}
-
+// ===== SETTINGS ACTIONS =====
 function exportData() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workforce-allocator-export.json';
+    a.href = URL.createObjectURL(blob);
+    a.download = 'wie-zit-waar-export.json';
     a.click();
-    URL.revokeObjectURL(url);
-    notify('Data geëxporteerd!', 'success');
+    URL.revokeObjectURL(a.href);
+    toast('Geëxporteerd!', 'success');
 }
 
-function importData() {
-    document.getElementById('import-file').click();
-}
+function importData() { document.getElementById('import-file').click(); }
 
 function handleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const imported = JSON.parse(e.target.result);
-            if (imported.employees && imported.departments) {
-                state = imported;
+            const d = JSON.parse(e.target.result);
+            if (d.employees && d.departments) {
+                state = d;
                 saveState();
                 renderAll();
-                notify('Data geïmporteerd!', 'success');
+                toast('Geïmporteerd!', 'success');
             } else {
-                notify('Ongeldig bestand!', 'error');
+                toast('Ongeldig bestand!', 'error');
             }
-        } catch (err) {
-            notify('Fout bij importeren: ' + err.message, 'error');
-        }
+        } catch(err) { toast('Fout bij importeren', 'error'); }
     };
     reader.readAsText(file);
     event.target.value = '';
 }
 
-// ===== NOTIFICATIONS =====
-function notify(msg, type = 'success') {
-    const existing = document.querySelector('.notification');
-    if (existing) existing.remove();
-
-    const el = document.createElement('div');
-    el.className = `notification ${type}`;
-    el.textContent = msg;
-    document.body.appendChild(el);
-
-    setTimeout(() => el.remove(), 3000);
+function resetAll() {
+    if (!confirm('Alle data wissen? Dit kan niet ongedaan worden!')) return;
+    state = { employees: [], departments: [], allocations: [], nextEmpId: 1, nextDeptId: 1 };
+    saveState();
+    renderAll();
+    toast('Alles gewist', 'success');
 }
 
-// ===== LOCAL STORAGE =====
-function saveState() {
-    localStorage.setItem('workforce-allocator', JSON.stringify(state));
-}
-
-function loadState() {
-    const saved = localStorage.getItem('workforce-allocator');
-    if (saved) {
-        try {
-            state = JSON.parse(saved);
-        } catch(e) {
-            console.error('Failed to load state:', e);
-        }
-    }
-}
-
-// ===== KEYBOARD SHORTCUTS =====
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeModal('employee-modal');
-        closeModal('dept-modal');
-        closeAllocPopup();
-    }
-});
-
-// ===== SIDEBAR TOGGLE =====
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebar-toggle');
-    const collapsed = sidebar.classList.toggle('collapsed');
-    toggle.classList.toggle('shifted', !collapsed);
-    toggle.innerHTML = collapsed ? '&#x2630;' : '&#x2716;';
-}
-
-// On mobile, start with sidebar open, tap to close
-if (window.innerWidth <= 768) {
-    // Start collapsed on mobile so canvas is visible
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebar-toggle');
-    sidebar.classList.add('collapsed');
-    toggle.classList.remove('shifted');
-    toggle.innerHTML = '&#x2630;';
+function loadDemo() {
+    state.employees = [
+        { id: 1, name: 'Lisa de Vries', role: 'developer', fte: 1.0, color: '#3498db' },
+        { id: 2, name: 'Mark Jansen', role: 'developer', fte: 0.8, color: '#2ecc71' },
+        { id: 3, name: 'Sophie Bakker', role: 'designer', fte: 1.0, color: '#9b59b6' },
+        { id: 4, name: 'Tom Visser', role: 'manager', fte: 1.0, color: '#e67e22' },
+        { id: 5, name: 'Anna Smit', role: 'sales', fte: 0.6, color: '#e74c3c' },
+        { id: 6, name: 'Pieter Mulder', role: 'support', fte: 1.0, color: '#1abc9c' },
+    ];
+    state.departments = [
+        { id: 1, name: 'Engineering', fteNeeded: 3, priority: 'high', minFte: 2, maxFte: 5, roles: ['developer','designer'], color: '#3498db' },
+        { id: 2, name: 'Sales & Marketing', fteNeeded: 2, priority: 'medium', minFte: 1, maxFte: 3, roles: ['sales','marketing'], color: '#e74c3c' },
+        { id: 3, name: 'Klantenservice', fteNeeded: 1.5, priority: 'medium', minFte: 1, maxFte: 2, roles: ['support'], color: '#2ecc71' },
+        { id: 4, name: 'Management', fteNeeded: 1, priority: 'high', minFte: 1, maxFte: 2, roles: ['manager'], color: '#f39c12' },
+    ];
+    state.allocations = [];
+    state.nextEmpId = 7;
+    state.nextDeptId = 5;
+    saveState();
+    renderAll();
+    switchView('canvas');
+    toast('Demo data geladen!', 'success');
 }
 
 // ===== INIT =====
 loadState();
 renderAll();
 
-// Add demo data if fresh
+// Load demo if fresh
 if (state.employees.length === 0 && state.departments.length === 0) {
-    // Add some demo employees
-    const demoEmps = [
-        { name: 'Lisa de Vries', role: 'developer', fte: 1.0, color: '#3498db' },
-        { name: 'Mark Jansen', role: 'developer', fte: 0.8, color: '#2ecc71' },
-        { name: 'Sophie Bakker', role: 'designer', fte: 1.0, color: '#9b59b6' },
-        { name: 'Tom Visser', role: 'manager', fte: 1.0, color: '#e67e22' },
-        { name: 'Anna Smit', role: 'sales', fte: 0.6, color: '#e74c3c' },
-        { name: 'Pieter Mulder', role: 'support', fte: 1.0, color: '#1abc9c' },
-    ];
-
-    demoEmps.forEach(emp => {
-        state.employees.push({ id: state.nextEmpId++, ...emp });
-    });
-
-    const demoDepts = [
-        { name: 'Engineering', fteNeeded: 3, priority: 'high', minFte: 2, maxFte: 5, roles: ['developer', 'designer'], color: '#3498db' },
-        { name: 'Sales & Marketing', fteNeeded: 2, priority: 'medium', minFte: 1, maxFte: 3, roles: ['sales', 'marketing'], color: '#e74c3c' },
-        { name: 'Klantenservice', fteNeeded: 1.5, priority: 'medium', minFte: 1, maxFte: 2, roles: ['support'], color: '#2ecc71' },
-        { name: 'Management', fteNeeded: 1, priority: 'high', minFte: 1, maxFte: 2, roles: ['manager'], color: '#f39c12' },
-    ];
-
-    demoDepts.forEach(dept => {
-        state.departments.push({ id: state.nextDeptId++, ...dept });
-    });
-
-    saveState();
-    renderAll();
+    loadDemo();
 }
 </script>
 </body>
