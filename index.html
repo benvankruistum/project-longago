@@ -300,18 +300,25 @@
             position: fixed;
             bottom: calc(70px + var(--safe-bottom));
             right: 16px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            height: 48px;
+            border-radius: 24px;
             border: none;
             background: var(--accent2);
             color: white;
-            font-size: 28px;
+            font-size: 0.9em;
+            font-weight: 700;
             box-shadow: 0 4px 20px rgba(52,152,219,0.4);
             cursor: pointer;
             z-index: 40;
             transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 18px;
+            white-space: nowrap;
         }
+
+        .fab .fab-icon { font-size: 1.3em; }
 
         .fab:active { transform: scale(0.9); }
 
@@ -741,7 +748,7 @@
 </div>
 
 <!-- FAB -->
-<button class="fab" id="fab" onclick="fabAction()">+</button>
+<button class="fab" id="fab" onclick="fabAction()"><span class="fab-icon">+</span><span id="fab-label">Nieuw</span></button>
 
 <!-- BOTTOM NAV -->
 <div class="bottomnav">
@@ -824,19 +831,50 @@ function switchView(view) {
     document.querySelectorAll('.nav-item').forEach(n => {
         n.classList.toggle('active', n.dataset.view === view);
     });
-    const fab = document.getElementById('fab');
-    fab.style.display = (view === 'settings') ? 'none' : 'flex';
+    updateFab();
     renderView();
 }
 
 function fabAction() {
     if (currentView === 'canvas') {
-        // Show pick: add dept to canvas or go to depts
-        openAddDeptToCanvas();
+        openSheet(`
+            <h2>Wat wil je toevoegen?</h2>
+            <div class="pick-item" onclick="closeSheet(); setTimeout(() => openEmployeeSheet(), 350);">
+                <div style="font-size:1.6em;">&#x1F464;</div>
+                <div class="pick-item-info">
+                    <div class="pick-item-name">Medewerker</div>
+                    <div class="pick-item-meta">Nieuw poppetje aanmaken</div>
+                </div>
+            </div>
+            <div class="pick-item" onclick="closeSheet(); setTimeout(() => openDeptSheet(), 350);">
+                <div style="font-size:1.6em;">&#x1F3E0;</div>
+                <div class="pick-item-info">
+                    <div class="pick-item-name">Afdeling</div>
+                    <div class="pick-item-meta">Nieuwe afdeling aanmaken</div>
+                </div>
+            </div>
+        `);
     } else if (currentView === 'employees') {
         openEmployeeSheet();
     } else if (currentView === 'departments') {
         openDeptSheet();
+    }
+}
+
+function updateFab() {
+    const fab = document.getElementById('fab');
+    const label = document.getElementById('fab-label');
+    if (currentView === 'canvas') {
+        label.textContent = 'Toevoegen';
+        fab.style.display = 'flex';
+    } else if (currentView === 'employees') {
+        label.textContent = 'Medewerker';
+        fab.style.display = 'flex';
+    } else if (currentView === 'departments') {
+        label.textContent = 'Afdeling';
+        fab.style.display = 'flex';
+    } else {
+        fab.style.display = 'none';
     }
 }
 
@@ -1182,15 +1220,23 @@ function updateScores() {
         });
     });
 
+    // Calculate max possible score (all depts 100% filled, no penalties)
+    let maxScore = 0;
+    state.departments.forEach(dept => {
+        const m = mult[dept.priority] || 1;
+        maxScore += Math.round(100 * m);
+    });
+
     score = Math.max(0, score);
+    const scorePct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
     const fillRate = totalNeeded > 0 ? Math.round((totalFilled / totalNeeded) * 100) : 0;
 
-    document.getElementById('score-val').textContent = score;
+    document.getElementById('score-val').textContent = `${score}/${maxScore}`;
     document.getElementById('fill-val').textContent = fillRate + '%';
     document.getElementById('gaps-val').textContent = gaps;
 
     const ps = document.getElementById('pill-score');
-    ps.className = `pill ${score > 300 ? 'good' : score > 100 ? 'warn' : 'bad'}`;
+    ps.className = `pill ${scorePct >= 80 ? 'good' : scorePct >= 40 ? 'warn' : 'bad'}`;
     const pf = document.getElementById('pill-fill');
     pf.className = `pill ${fillRate >= 80 ? 'good' : fillRate >= 50 ? 'warn' : 'bad'}`;
     const pg = document.getElementById('pill-gaps');
