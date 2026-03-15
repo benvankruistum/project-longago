@@ -849,7 +849,7 @@
                     <span class="cost-label">Geschatte loonkosten/FTE</span>
                     <span class="cost-value" id="sector-cost">-</span>
                 </div>
-                <div style="font-size:0.7em;color:#aaa;margin-top:4px;">Incl. ~30% werkgeverslasten. Bron: CBS/sectorgemiddelden.</div>
+                <div style="font-size:0.7em;color:#aaa;margin-top:4px;">Incl. vakantiegeld, pensioen &amp; sociale lasten. Bron: CBS/CPB 2025-2026.</div>
             </div>
         </div></div>
 
@@ -1131,7 +1131,7 @@ function renderCanvas() {
                 ${rolesHTML ? `<div class="badges-row">${rolesHTML}</div>` : ''}
                 ${state.company && state.company.sbiCode ? (() => {
                     const sec = getSBISection(state.company.sbiCode);
-                    const costPerFte = Math.round((SECTOR_SALARIES[sec] || 40000) * EMPLOYER_COST_FACTOR);
+                    const costPerFte = SECTOR_EMPLOYER_COSTS[sec] || Math.round((SECTOR_SALARIES[sec] || 48000) * EMPLOYER_COST_FACTOR);
                     const deptCost = Math.round(filled * costPerFte);
                     return `<div class="cost-bar" style="margin-top:8px;font-size:0.8em;">
                         <span class="cost-label">Kosten</span>
@@ -2003,15 +2003,22 @@ const SBI_DATA = [
     { code:'99', label:'Extraterritoriale organisaties en lichamen' }
 ];
 
-// Salary estimates per SBI section (bruto jaarsalaris, bron: CBS sectorgemiddelden)
+// Salary estimates per SBI section (bruto jaarsalaris + werkgeverskosten, bron: CBS/CPB 2025-2026)
 const SECTOR_SALARIES = {
-    'A': 32000, 'B': 62000, 'C': 42000, 'D': 58000, 'E': 40000,
-    'F': 40000, 'G': 34000, 'H': 36000, 'I': 26000, 'J': 56000,
-    'K': 64000, 'L': 46000, 'M': 52000, 'N': 30000, 'O': 48000,
-    'P': 44000, 'Q': 38000, 'R': 32000, 'S': 30000, 'T': 24000, 'U': 52000
+    'A': 34000, 'B': 72000, 'C': 48000, 'D': 62000, 'E': 46000,
+    'F': 44000, 'G': 38000, 'H': 40000, 'I': 28000, 'J': 62000,
+    'K': 68000, 'L': 48000, 'M': 56000, 'N': 34000, 'O': 52000,
+    'P': 50000, 'Q': 46000, 'R': 34000, 'S': 36000, 'T': 24000, 'U': 65000
+};
+// Total employer cost per section (incl. vakantiegeld, pensioen, sociale lasten)
+const SECTOR_EMPLOYER_COSTS = {
+    'A': 45000, 'B': 97000, 'C': 65000, 'D': 84000, 'E': 62000,
+    'F': 60000, 'G': 51000, 'H': 54000, 'I': 38000, 'J': 84000,
+    'K': 92000, 'L': 65000, 'M': 76000, 'N': 46000, 'O': 70000,
+    'P': 68000, 'Q': 62000, 'R': 46000, 'S': 49000, 'T': 32000, 'U': 88000
 };
 
-const EMPLOYER_COST_FACTOR = 1.30; // ~30% werkgeverslasten
+const EMPLOYER_COST_FACTOR = 1.35; // ~35% werkgeverslasten (vakantiegeld + soc.lasten + pensioen)
 
 // ===== SBI SEARCH =====
 let sbiDropdownOpen = false;
@@ -2101,8 +2108,8 @@ function updateSalaryIndicator() {
     if (!code) { indicator.style.display = 'none'; return; }
 
     const section = getSBISection(code);
-    const salary = SECTOR_SALARIES[section] || 40000;
-    const cost = Math.round(salary * EMPLOYER_COST_FACTOR);
+    const salary = SECTOR_SALARIES[section] || 48000;
+    const cost = SECTOR_EMPLOYER_COSTS[section] || Math.round(salary * EMPLOYER_COST_FACTOR);
 
     document.getElementById('sector-salary').textContent = '€ ' + salary.toLocaleString('nl-NL');
     document.getElementById('sector-cost').textContent = '€ ' + cost.toLocaleString('nl-NL');
@@ -2118,8 +2125,7 @@ function updateCostOverview() {
     }
 
     const section = getSBISection(code);
-    const baseSalary = SECTOR_SALARIES[section] || 40000;
-    const costPerFte = Math.round(baseSalary * EMPLOYER_COST_FACTOR);
+    const costPerFte = SECTOR_EMPLOYER_COSTS[section] || Math.round((SECTOR_SALARIES[section] || 48000) * EMPLOYER_COST_FACTOR);
 
     let totalCost = 0;
     let html = '';
