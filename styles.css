@@ -1438,6 +1438,55 @@ body {
     font-weight: 600;
 }
 
+/* ===== AI SUGGEST ===== */
+.ai-suggest-box {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(52,152,219,0.3);
+}
+
+.ai-suggest-header {
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-suggest-body {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ai-suggest-body input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 0.85em;
+}
+
+.ai-suggest-body input::placeholder { color: rgba(255,255,255,0.4); }
+.ai-suggest-body input:focus { outline: none; border-color: var(--accent2); }
+
+.ai-alloc-btn {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: var(--accent2);
+    border: 1px solid rgba(52,152,219,0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-alloc-btn:active { transform: scale(0.95); }
+
 /* ===== HELP & COLOFON PAGE ===== */
 .help-page {
     max-width: 600px;

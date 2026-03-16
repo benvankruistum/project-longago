@@ -204,6 +204,10 @@
                     <option value="zzp">ZZP</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>Aantal medewerkers (totaal)</label>
+                <input type="number" id="company-employees" min="1" max="10000" step="1" placeholder="bijv. 25" oninput="saveCompanyProfile()">
+            </div>
             <div id="salary-indicator" style="display:none;">
                 <label style="display:block;font-size:0.8em;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Salarisindicatie sector</label>
                 <div class="cost-bar">
@@ -221,6 +225,15 @@
         <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">Personeelskosten overzicht</h3>
         <div class="card"><div class="card-body" id="cost-overview">
             <p style="color:#aaa;font-size:0.9em;">Selecteer een branchecode om kostenindicaties te zien.</p>
+        </div></div>
+
+        <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">AI Assistent</h3>
+        <div class="card"><div class="card-body">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Claude API Key</label>
+                <input type="password" id="ai-api-key" placeholder="sk-ant-..." oninput="saveAIKey()" autocomplete="off">
+                <div style="font-size:0.7em;color:#aaa;margin-top:4px;">Je API key wordt alleen lokaal opgeslagen. Nodig voor AI-suggesties.</div>
+            </div>
         </div></div>
 
         <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">Data</h3>

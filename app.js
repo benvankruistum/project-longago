@@ -30,7 +30,7 @@ let state = {
     departments: [],
     allocations: [],    // { empId, deptId, fte, asRole }
     deptOrder: [],      // ordered dept ids for canvas
-    company: { name: '', sbiCode: '', sbiLabel: '', type: '' },
+    company: { name: '', sbiCode: '', sbiLabel: '', type: '', employeeCount: '' },
     nextEmpId: 1,
     nextDeptId: 1
 };
@@ -299,6 +299,7 @@ function switchView(view) {
     renderView();
     if (view === 'settings') {
         loadCompanyProfile();
+        loadAIKey();
         updateCostOverview();
     }
     if (view === 'orgchart') renderOrgChart();
@@ -383,7 +384,12 @@ function renderCanvas() {
         return;
     }
 
-    let html = '';
+    const hasApiKey = !!getAIKey();
+    const hasEmpsAndDepts = state.employees.length > 0 && depts.length > 0;
+    let html = (hasApiKey && hasEmpsAndDepts) ? `<div style="text-align:right;margin-bottom:10px;">
+        <button class="btn btn-sm ai-alloc-btn" id="ai-alloc-btn" onclick="aiSuggestAllocation()">${icon('star', 16)} AI Indeling</button>
+    </div>` : '';
+
     depts.forEach(dept => {
         const filled = getDeptFilled(dept.id);
         const pct = dept.fteNeeded > 0 ? Math.min(100, (filled / dept.fteNeeded) * 100) : 0;
@@ -854,8 +860,18 @@ function openDeptSheet(deptId, defaultParentId) {
         }
     });
 
+    const aiBox = !dept ? `
+        <div class="ai-suggest-box">
+            <div class="ai-suggest-header">${icon('star', 16)} AI Suggestie</div>
+            <div class="ai-suggest-body">
+                <input type="text" id="f-dept-ai-desc" placeholder="Beschrijf wat deze afdeling doet..." style="flex:1;">
+                <button class="btn btn-sm btn-primary" id="ai-dept-btn" onclick="aiSuggestDepartment()">Suggereer</button>
+            </div>
+        </div>` : '';
+
     openSheet(`
         <h2>${dept ? icon('edit', 20) + ' ' + dept.name : icon('house', 20) + ' Nieuwe Afdeling'}</h2>
+        ${aiBox}
         <div class="form-group">
             <label>Naam</label>
             <input type="text" id="f-dept-name" value="${dept ? dept.name : ''}" placeholder="Engineering">
@@ -1280,14 +1296,16 @@ function updateCostOverview() {
 function saveCompanyProfile() {
     state.company.name = document.getElementById('company-name').value.trim();
     state.company.type = document.getElementById('company-type').value;
+    state.company.employeeCount = document.getElementById('company-employees').value;
     updateTopbarTitle();
     saveState();
 }
 
 function loadCompanyProfile() {
-    if (!state.company) state.company = { name:'', sbiCode:'', sbiLabel:'', type:'' };
+    if (!state.company) state.company = { name:'', sbiCode:'', sbiLabel:'', type:'', employeeCount:'' };
     document.getElementById('company-name').value = state.company.name || '';
     document.getElementById('company-type').value = state.company.type || '';
+    document.getElementById('company-employees').value = state.company.employeeCount || '';
     if (state.company.sbiCode) {
         document.getElementById('sbi-selected').innerHTML =
             `<strong>${state.company.sbiCode}</strong> \u2014 ${state.company.sbiLabel} <span style="color:var(--accent3);">\u2713</span>`;
@@ -1776,6 +1794,225 @@ function shouldShowWelcome() {
     } catch(e) { return false; }
 }
 
+// ===== AI ASSISTANT =====
+function getAIKey() {
+    try { return localStorage.getItem('wiezittwaar_aikey') || ''; } catch(e) { return ''; }
+}
+function saveAIKey() {
+    const key = document.getElementById('ai-api-key').value.trim();
+    try { localStorage.setItem('wiezittwaar_aikey', key); } catch(e) {}
+}
+function loadAIKey() {
+    const el = document.getElementById('ai-api-key');
+    if (el) el.value = getAIKey();
+}
+
+async function callClaude(prompt, systemPrompt) {
+    const apiKey = getAIKey();
+    if (!apiKey) {
+        toast('Stel eerst je Claude API key in bij Meer > AI Assistent', 'error');
+        return null;
+    }
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+            model: 'claude-haiku-4-5',
+            max_tokens: 1024,
+            system: systemPrompt || 'Je bent een Nederlandse HR- en organisatieadviseur. Antwoord altijd in het Nederlands. Geef beknopte, praktische adviezen.',
+            messages: [{ role: 'user', content: prompt }]
+        })
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const msg = err.error?.message || `API fout (${resp.status})`;
+        toast('AI fout: ' + msg, 'error');
+        return null;
+    }
+    const data = await resp.json();
+    const text = data.content?.find(b => b.type === 'text')?.text;
+    return text || null;
+}
+
+function getCompanyContext() {
+    const c = state.company;
+    let ctx = '';
+    if (c.name) ctx += `Bedrijf: ${c.name}. `;
+    if (c.type) ctx += `Type: ${c.type}. `;
+    if (c.sbiLabel) ctx += `Branche: ${c.sbiLabel} (SBI ${c.sbiCode}). `;
+    if (c.employeeCount) ctx += `Totaal ${c.employeeCount} medewerkers. `;
+    return ctx || 'Geen bedrijfsinformatie beschikbaar.';
+}
+
+// -- AI: Department name + role suggestion --
+async function aiSuggestDepartment() {
+    const descEl = document.getElementById('f-dept-ai-desc');
+    const desc = descEl ? descEl.value.trim() : '';
+    if (!desc) {
+        toast('Vul een beschrijving in voor de afdeling', 'warning');
+        return;
+    }
+    const btn = document.getElementById('ai-dept-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Bezig...'; }
+
+    const prompt = `${getCompanyContext()}
+
+Ik wil een nieuwe afdeling opzetten. Beschrijving van wat deze afdeling doet:
+"${desc}"
+
+Geef me:
+1. Een korte, professionele afdelingsnaam (max 3 woorden)
+2. De benodigde FTE (schatting op basis van het aantal medewerkers van het bedrijf)
+3. Een lijst van 3-6 functies/rollen die bij deze afdeling horen
+
+Antwoord ALLEEN in dit JSON formaat, geen andere tekst:
+{"naam": "...", "fte": 3, "rollen": ["rol1", "rol2", "rol3"]}`;
+
+    try {
+        const result = await callClaude(prompt);
+        if (result) {
+            const jsonMatch = result.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const data = JSON.parse(jsonMatch[0]);
+                if (data.naam) {
+                    const nameEl = document.getElementById('f-dept-name');
+                    if (nameEl) nameEl.value = data.naam;
+                }
+                if (data.fte) {
+                    const fteEl = document.getElementById('f-dept-fte');
+                    if (fteEl) fteEl.value = data.fte;
+                }
+                if (data.rollen && Array.isArray(data.rollen)) {
+                    const rolesEl = document.getElementById('f-dept-roles');
+                    if (rolesEl) rolesEl.value = data.rollen.join(', ');
+                }
+                toast('AI suggestie ingevuld!', 'success');
+            } else {
+                toast('Kon AI antwoord niet verwerken', 'error');
+            }
+        }
+    } catch (e) {
+        toast('AI fout: ' + e.message, 'error');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Suggereer'; }
+}
+
+// -- AI: Allocation suggestion --
+async function aiSuggestAllocation() {
+    if (state.employees.length === 0 || state.departments.length === 0) {
+        toast('Voeg eerst medewerkers en afdelingen toe', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('ai-alloc-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = icon('refresh', 16) + ' Bezig...'; }
+
+    const emps = state.employees.map(e => `- ${e.name} (rol: ${e.role || 'geen'}, ${e.fte} FTE)`).join('\n');
+    const depts = state.departments.map(d =>
+        `- ${d.name} (nodig: ${d.fteNeeded} FTE, min: ${d.minFte}, max: ${d.maxFte}, rollen: ${d.roles.join(', ') || 'geen'}, prioriteit: ${d.priority})`
+    ).join('\n');
+    const currentAllocs = state.allocations.map(a => {
+        const emp = state.employees.find(e => e.id === a.empId);
+        const dept = state.departments.find(d => d.id === a.deptId);
+        return emp && dept ? `- ${emp.name} → ${dept.name} (${a.fte} FTE)` : null;
+    }).filter(Boolean).join('\n');
+
+    const prompt = `${getCompanyContext()}
+
+MEDEWERKERS:
+${emps}
+
+AFDELINGEN:
+${depts}
+
+${currentAllocs ? 'HUIDIGE TOEWIJZINGEN:\n' + currentAllocs + '\n' : ''}
+Maak een optimale verdeling van alle medewerkers over de afdelingen. Houd rekening met:
+- Rollen van medewerkers matchen met gewenste rollen van afdelingen
+- FTE-behoeften en min/max grenzen per afdeling
+- Prioriteit van afdelingen (hoog eerst)
+- Een medewerker kan over meerdere afdelingen verdeeld worden (fte opsplitsen)
+
+Antwoord ALLEEN in dit JSON formaat, geen andere tekst:
+{"toewijzingen": [{"medewerker": "Naam", "afdeling": "Afdelingsnaam", "fte": 0.8, "alsRol": "rol"}], "toelichting": "korte uitleg van de keuzes"}`;
+
+    try {
+        const result = await callClaude(prompt);
+        if (result) {
+            const jsonMatch = result.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const data = JSON.parse(jsonMatch[0]);
+                if (data.toewijzingen && Array.isArray(data.toewijzingen)) {
+                    showAllocationSuggestion(data);
+                } else {
+                    toast('Kon AI antwoord niet verwerken', 'error');
+                }
+            } else {
+                toast('Kon AI antwoord niet verwerken', 'error');
+            }
+        }
+    } catch (e) {
+        toast('AI fout: ' + e.message, 'error');
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = icon('star', 16) + ' AI Indeling'; }
+}
+
+function showAllocationSuggestion(data) {
+    let html = '<h2>AI Indelingsvoorstel</h2>';
+    if (data.toelichting) {
+        html += `<p style="font-size:0.9em;color:#666;margin-bottom:12px;">${data.toelichting}</p>`;
+    }
+    html += '<div style="max-height:50vh;overflow-y:auto;">';
+    data.toewijzingen.forEach(t => {
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+            <div>
+                <strong>${t.medewerker}</strong> → ${t.afdeling}
+                ${t.alsRol ? `<span style="font-size:0.8em;color:var(--accent2);margin-left:6px;">${t.alsRol}</span>` : ''}
+            </div>
+            <span style="font-weight:700;color:var(--accent3);">${t.fte} FTE</span>
+        </div>`;
+    });
+    html += '</div>';
+    html += `<div class="btn-row" style="margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+        <button class="btn btn-success" onclick="applyAllocationSuggestion()">Toepassen</button>
+    </div>`;
+
+    window._aiAllocationData = data;
+    openSheet(html);
+}
+
+function applyAllocationSuggestion() {
+    const data = window._aiAllocationData;
+    if (!data || !data.toewijzingen) return;
+
+    // Clear existing allocations
+    state.allocations = [];
+
+    data.toewijzingen.forEach(t => {
+        const emp = state.employees.find(e => e.name === t.medewerker);
+        const dept = state.departments.find(d => d.name === t.afdeling);
+        if (emp && dept) {
+            state.allocations.push({
+                empId: emp.id,
+                deptId: dept.id,
+                fte: parseFloat(t.fte) || emp.fte,
+                asRole: t.alsRol || ''
+            });
+        }
+    });
+
+    saveState();
+    renderAll();
+    closeSheet();
+    toast('AI indeling toegepast!', 'success');
+    delete window._aiAllocationData;
+}
+
 // ===== INIT =====
 // Inject SVG icons into static HTML elements
 function initIcons() {
@@ -1811,6 +2048,7 @@ function initIcons() {
 initIcons();
 loadState();
 loadCompanyProfile();
+loadAIKey();
 renderAll();
 updateCostOverview();
 
