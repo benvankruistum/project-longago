@@ -1262,7 +1262,7 @@ body {
 .org-drag-lock {
     position: absolute;
     bottom: calc(16px + var(--safe-bottom));
-    right: 16px;
+    left: 16px;
     display: flex;
     align-items: center;
     gap: 6px;
