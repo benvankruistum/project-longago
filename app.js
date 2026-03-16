@@ -274,6 +274,7 @@ function switchView(view) {
         loadCompanyProfile();
         updateCostOverview();
     }
+    if (view === 'orgchart') renderOrgChart();
 }
 
 function fabAction() {
@@ -299,13 +300,15 @@ function fabAction() {
         openEmployeeSheet();
     } else if (currentView === 'departments') {
         openDeptSheet();
+    } else if (currentView === 'orgchart') {
+        openDeptSheet();
     }
 }
 
 function updateFab() {
     const fab = document.getElementById('fab');
     const label = document.getElementById('fab-label');
-    const labels = { canvas: 'Toevoegen', employees: 'Medewerker', departments: 'Afdeling' };
+    const labels = { canvas: 'Toevoegen', employees: 'Medewerker', departments: 'Afdeling', orgchart: 'Afdeling' };
 
     if (labels[currentView]) {
         label.textContent = labels[currentView];
@@ -320,6 +323,7 @@ function renderView() {
     if (currentView === 'canvas') renderCanvas();
     else if (currentView === 'employees') renderEmployees();
     else if (currentView === 'departments') renderDepartments();
+    else if (currentView === 'orgchart') renderOrgChart();
     updateScores();
 }
 
@@ -327,6 +331,7 @@ function renderAll() {
     renderView();
     updateScores();
     if (currentView === 'settings') updateCostOverview();
+    if (currentView === 'orgchart') renderOrgChart();
 }
 
 // ===== CANVAS / OVERZICHT =====
@@ -746,16 +751,30 @@ function deleteEmployee(empId) {
 }
 
 // -- Department Sheet --
-function openDeptSheet(deptId) {
+function openDeptSheet(deptId, defaultParentId) {
     const dept = deptId ? state.departments.find(d => d.id === deptId) : null;
     const selColor = dept ? dept.color : randomColor(COLORS_DEPT);
     const deleteBtn = dept ? `<button class="btn btn-danger" style="margin-top:12px;" onclick="deleteDepartment(${dept.id})">Verwijderen</button>` : '';
+
+    // Build parent options (exclude self and descendants to prevent cycles)
+    const excludeIds = dept ? getDescendantIds(dept.id).concat(dept.id) : [];
+    const parentId = dept ? (dept.parentId || null) : (defaultParentId || null);
+    let parentOpts = `<option value="" ${!parentId ? 'selected' : ''}>-- Geen (root) --</option>`;
+    state.departments.forEach(d => {
+        if (!excludeIds.includes(d.id)) {
+            parentOpts += `<option value="${d.id}" ${parentId === d.id ? 'selected' : ''}>${d.name}</option>`;
+        }
+    });
 
     openSheet(`
         <h2>${dept ? '&#x270F; ' + dept.name : '&#x1F3E0; Nieuwe Afdeling'}</h2>
         <div class="form-group">
             <label>Naam</label>
             <input type="text" id="f-dept-name" value="${dept ? dept.name : ''}" placeholder="Engineering">
+        </div>
+        <div class="form-group">
+            <label>Bovenliggende afdeling</label>
+            <select id="f-dept-parent">${parentOpts}</select>
         </div>
         <div class="form-row">
             <div class="form-group">
@@ -798,6 +817,16 @@ function openDeptSheet(deptId) {
     `);
 }
 
+function getDescendantIds(deptId) {
+    const ids = [];
+    const children = state.departments.filter(d => d.parentId === deptId);
+    children.forEach(c => {
+        ids.push(c.id);
+        ids.push(...getDescendantIds(c.id));
+    });
+    return ids;
+}
+
 function saveDepartment(deptId) {
     const name = document.getElementById('f-dept-name').value.trim();
     const fteNeeded = parseFloat(document.getElementById('f-dept-fte').value);
@@ -806,15 +835,17 @@ function saveDepartment(deptId) {
     const maxFte = parseFloat(document.getElementById('f-dept-max').value);
     const roles = document.getElementById('f-dept-roles').value.split(',').map(r => r.trim().toLowerCase()).filter(r => r);
     const color = document.getElementById('f-dept-color').value;
+    const parentVal = document.getElementById('f-dept-parent').value;
+    const parentId = parentVal ? parseInt(parentVal) : null;
 
     if (!name) { toast('Vul een naam in!', 'error'); return; }
     if (isNaN(fteNeeded) || fteNeeded < 0.1) { toast('FTE moet minimaal 0.1 zijn!', 'error'); return; }
 
     if (deptId) {
         const dept = state.departments.find(d => d.id === deptId);
-        Object.assign(dept, { name, fteNeeded, priority, minFte, maxFte, roles, color });
+        Object.assign(dept, { name, fteNeeded, priority, minFte, maxFte, roles, color, parentId });
     } else {
-        state.departments.push({ id: state.nextDeptId++, name, fteNeeded, priority, minFte, maxFte, roles, color });
+        state.departments.push({ id: state.nextDeptId++, name, fteNeeded, priority, minFte, maxFte, roles, color, parentId });
     }
 
     closeSheet();
@@ -1025,10 +1056,10 @@ function loadDemo() {
         { id: 6, name: 'Pieter Mulder', role: 'support', fte: 1.0, color: '#1abc9c' },
     ];
     state.departments = [
-        { id: 1, name: 'Engineering', fteNeeded: 3, priority: 'high', minFte: 2, maxFte: 5, roles: ['developer','designer'], color: '#3498db' },
-        { id: 2, name: 'Sales & Marketing', fteNeeded: 2, priority: 'medium', minFte: 1, maxFte: 3, roles: ['sales','marketing'], color: '#e74c3c' },
-        { id: 3, name: 'Klantenservice', fteNeeded: 1.5, priority: 'medium', minFte: 1, maxFte: 2, roles: ['support'], color: '#2ecc71' },
-        { id: 4, name: 'Management', fteNeeded: 1, priority: 'high', minFte: 1, maxFte: 2, roles: ['manager'], color: '#f39c12' },
+        { id: 1, name: 'Engineering', fteNeeded: 3, priority: 'high', minFte: 2, maxFte: 5, roles: ['developer','designer'], color: '#3498db', parentId: 4 },
+        { id: 2, name: 'Sales & Marketing', fteNeeded: 2, priority: 'medium', minFte: 1, maxFte: 3, roles: ['sales','marketing'], color: '#e74c3c', parentId: 4 },
+        { id: 3, name: 'Klantenservice', fteNeeded: 1.5, priority: 'medium', minFte: 1, maxFte: 2, roles: ['support'], color: '#2ecc71', parentId: 2 },
+        { id: 4, name: 'Management', fteNeeded: 1, priority: 'high', minFte: 1, maxFte: 2, roles: ['manager'], color: '#f39c12', parentId: null },
     ];
     state.allocations = [];
     state.deptOrder = [1, 2, 3, 4];
@@ -1186,6 +1217,351 @@ function updateTopbarTitle() {
 document.addEventListener('click', (e) => {
     if (sbiDropdownOpen && !e.target.closest('#sbi-search')) closeSBIDropdown();
 });
+
+// ===== ORGANOGRAM =====
+let orgZoom = 1;
+let orgDragId = null; // dept id being dragged
+
+function buildOrgTree(parentId) {
+    return state.departments
+        .filter(d => (d.parentId || null) === parentId)
+        .map(dept => ({
+            dept,
+            children: buildOrgTree(dept.id)
+        }));
+}
+
+function renderOrgNodeHTML(node) {
+    const dept = node.dept;
+    const filled = getDeptFilled(dept.id);
+    const pct = dept.fteNeeded > 0 ? Math.min(100, (filled / dept.fteNeeded) * 100) : 0;
+    const barColor = fteBarColor(pct, false);
+    const allocs = state.allocations.filter(a => a.deptId === dept.id);
+
+    let miniPoppetjes = '';
+    allocs.slice(0, 5).forEach(a => {
+        const emp = state.employees.find(e => e.id === a.empId);
+        if (emp) miniPoppetjes += poppetjeSVG(emp.color, 18);
+    });
+    if (allocs.length > 5) miniPoppetjes += `<span style="font-size:9px;color:#999;">+${allocs.length - 5}</span>`;
+
+    let childrenHTML = '';
+    if (node.children.length > 0) {
+        const childNodes = node.children.map(c => `<div class="org-branch">${renderOrgNodeHTML(c)}</div>`).join('');
+        // Add a "+ new" button as last child
+        const addBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet(null, ${dept.id})">
+            <span class="org-node-add-icon">+</span>
+            <span>Nieuw</span>
+        </div></div>`;
+        childrenHTML = `<div class="org-children">${childNodes}${addBtn}</div>`;
+    }
+
+    return `
+        <div class="org-node" data-org-dept="${dept.id}" draggable="true"
+             onclick="if(!orgTouchMoved)openDeptSheet(${dept.id})"
+             ondragstart="orgDragStart(event, ${dept.id})"
+             ondragend="orgDragEnd(event)"
+             ondragover="orgDragOver(event)"
+             ondragleave="orgDragLeave(event)"
+             ondrop="orgDrop(event, ${dept.id})">
+            <div class="org-node-bar" style="background:${dept.color}"></div>
+            <div class="org-node-body">
+                <div class="org-node-name">${dept.name}</div>
+                <div class="org-node-meta">${filled.toFixed(1)}/${dept.fteNeeded.toFixed(1)} FTE</div>
+                <div class="org-node-fte-bar">
+                    <div class="org-node-fte-fill" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+                ${miniPoppetjes ? `<div class="org-node-poppetjes">${miniPoppetjes}</div>` : ''}
+                <span class="org-node-badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
+            </div>
+        </div>
+        ${childrenHTML}
+    `;
+}
+
+function renderOrgChart() {
+    const container = document.getElementById('orgchart-container');
+    const tree = buildOrgTree(null);
+
+    if (tree.length === 0 && state.departments.length === 0) {
+        container.innerHTML = `<div class="empty">
+            <div class="empty-icon">\u{1F4CA}</div>
+            <p>Nog geen afdelingen!<br/>Tik op <b>+</b> om er een aan te maken.</p>
+        </div>`;
+        return;
+    }
+
+    // Orphans: departments whose parentId references a non-existing dept
+    const allIds = new Set(state.departments.map(d => d.id));
+    const orphans = state.departments.filter(d => d.parentId && !allIds.has(d.parentId));
+    orphans.forEach(d => { d.parentId = null; });
+
+    const treeRefreshed = buildOrgTree(null);
+    const branches = treeRefreshed.map(node => `<div class="org-branch">${renderOrgNodeHTML(node)}</div>`).join('');
+
+    // Add "new root dept" button
+    const addRootBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet()"
+        ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
+        <span class="org-node-add-icon">+</span>
+        <span>Nieuwe afdeling</span>
+    </div></div>`;
+
+    // Drop zone for making things root
+    const rootDropZone = `<div class="org-drop-root" id="org-root-drop"
+        ondragover="orgRootDragOver(event)" ondragleave="orgRootDragLeave(event)" ondrop="orgDrop(event, null)">
+        Sleep hier om naar root te verplaatsen
+    </div>`;
+
+    container.innerHTML = `
+        <div class="orgchart-tree" id="orgchart-tree" style="transform:scale(${orgZoom});transform-origin:top center;">
+            <div class="org-children" style="padding-top:0;">
+                ${branches}
+                ${addRootBtn}
+            </div>
+        </div>
+        ${rootDropZone}
+        <div class="org-zoom-controls">
+            <button class="org-zoom-btn" onclick="orgZoomChange(-0.1)">\u2212</button>
+            <button class="org-zoom-btn" onclick="orgZoomChange(0.1)">+</button>
+            <button class="org-zoom-btn" onclick="orgZoomReset()">1:1</button>
+        </div>
+    `;
+
+    // Calculate connector widths after render
+    requestAnimationFrame(updateOrgConnectors);
+
+    // Touch drag support
+    initOrgTouchDrag();
+}
+
+function updateOrgConnectors() {
+    document.querySelectorAll('.org-children').forEach(container => {
+        const branches = container.querySelectorAll(':scope > .org-branch');
+        if (branches.length < 2) {
+            container.style.setProperty('--org-half-width', '0px');
+            return;
+        }
+        const first = branches[0].querySelector('.org-node, .org-node-add');
+        const last = branches[branches.length - 1].querySelector('.org-node, .org-node-add');
+        if (first && last) {
+            const containerRect = container.getBoundingClientRect();
+            const firstRect = first.getBoundingClientRect();
+            const lastRect = last.getBoundingClientRect();
+            const firstCenter = firstRect.left + firstRect.width / 2 - containerRect.left;
+            const lastCenter = lastRect.left + lastRect.width / 2 - containerRect.left;
+            const center = containerRect.width / 2;
+            const halfWidth = Math.max(Math.abs(center - firstCenter), Math.abs(center - lastCenter));
+            container.style.setProperty('--org-half-width', halfWidth + 'px');
+        }
+    });
+}
+
+// Zoom
+function orgZoomChange(delta) {
+    orgZoom = Math.max(0.3, Math.min(2, orgZoom + delta));
+    const tree = document.getElementById('orgchart-tree');
+    if (tree) tree.style.transform = `scale(${orgZoom})`;
+}
+
+function orgZoomReset() {
+    orgZoom = 1;
+    const tree = document.getElementById('orgchart-tree');
+    if (tree) tree.style.transform = 'scale(1)';
+}
+
+// === Drag & Drop (desktop) ===
+function orgDragStart(e, deptId) {
+    e.stopPropagation();
+    orgDragId = deptId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', deptId);
+    // Delay adding class so the drag image captures correctly
+    setTimeout(() => {
+        const el = document.querySelector(`.org-node[data-org-dept="${deptId}"]`);
+        if (el) el.classList.add('dragging');
+    }, 0);
+}
+
+function orgDragEnd(e) {
+    document.querySelectorAll('.org-node.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over').forEach(el => el.classList.remove('drag-over'));
+    document.querySelectorAll('.org-drop-root.drag-active').forEach(el => el.classList.remove('drag-active'));
+    orgDragId = null;
+}
+
+function orgDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.currentTarget;
+    if (!target.classList.contains('drag-over')) target.classList.add('drag-over');
+}
+
+function orgDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function orgRootDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-active');
+}
+
+function orgRootDragLeave(e) {
+    e.currentTarget.classList.remove('drag-active');
+}
+
+function orgDrop(e, targetDeptId) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over', 'drag-active');
+
+    const draggedId = orgDragId || parseInt(e.dataTransfer.getData('text/plain'));
+    if (!draggedId || draggedId === targetDeptId) return;
+
+    // Prevent dropping onto own descendant (would create cycle)
+    if (targetDeptId !== null && getDescendantIds(draggedId).includes(targetDeptId)) {
+        toast('Kan niet onder eigen subafdeling plaatsen', 'error');
+        return;
+    }
+
+    const dept = state.departments.find(d => d.id === draggedId);
+    if (!dept) return;
+
+    dept.parentId = targetDeptId;
+    saveState();
+    renderOrgChart();
+    toast(`${dept.name} verplaatst`, 'success');
+}
+
+// === Touch drag for mobile ===
+let orgTouchDragId = null;
+let orgTouchClone = null;
+let orgTouchStartX = 0;
+let orgTouchStartY = 0;
+let orgTouchMoved = false;
+
+function initOrgTouchDrag() {
+    document.querySelectorAll('.org-node[data-org-dept]').forEach(node => {
+        node.addEventListener('touchstart', orgTouchStart, { passive: false });
+    });
+}
+
+function orgTouchStart(e) {
+    const node = e.currentTarget;
+    const deptId = parseInt(node.dataset.orgDept);
+    if (!deptId) return;
+
+    orgTouchDragId = deptId;
+    orgTouchMoved = false;
+    const touch = e.touches[0];
+    orgTouchStartX = touch.clientX;
+    orgTouchStartY = touch.clientY;
+
+    // Long press to start drag
+    node._longPressTimer = setTimeout(() => {
+        orgTouchMoved = true;
+        node.classList.add('dragging');
+
+        // Create floating clone
+        const rect = node.getBoundingClientRect();
+        orgTouchClone = node.cloneNode(true);
+        Object.assign(orgTouchClone.style, {
+            position: 'fixed', left: rect.left + 'px', top: rect.top + 'px',
+            width: rect.width + 'px', zIndex: '999', pointerEvents: 'none',
+            opacity: '0.85', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', transform: 'scale(1.05)'
+        });
+        document.body.appendChild(orgTouchClone);
+    }, 400);
+
+    document.addEventListener('touchmove', orgTouchMove, { passive: false });
+    document.addEventListener('touchend', orgTouchEnd);
+}
+
+function orgTouchMove(e) {
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - orgTouchStartX);
+    const dy = Math.abs(touch.clientY - orgTouchStartY);
+
+    if (!orgTouchMoved && (dx > 10 || dy > 10)) {
+        // Cancel long press if user scrolls
+        const node = document.querySelector(`.org-node[data-org-dept="${orgTouchDragId}"]`);
+        if (node && node._longPressTimer) clearTimeout(node._longPressTimer);
+        orgTouchCleanup();
+        return;
+    }
+
+    if (!orgTouchMoved || !orgTouchClone) return;
+    e.preventDefault();
+
+    orgTouchClone.style.left = (touch.clientX - 60) + 'px';
+    orgTouchClone.style.top = (touch.clientY - 30) + 'px';
+
+    // Highlight drop targets
+    document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over, .org-drop-root.drag-active')
+        .forEach(el => el.classList.remove('drag-over', 'drag-active'));
+
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (target) {
+        const dropNode = target.closest('.org-node[data-org-dept], .org-node-add, .org-drop-root');
+        if (dropNode) {
+            if (dropNode.classList.contains('org-drop-root')) dropNode.classList.add('drag-active');
+            else dropNode.classList.add('drag-over');
+        }
+    }
+}
+
+function orgTouchEnd(e) {
+    const node = document.querySelector(`.org-node[data-org-dept="${orgTouchDragId}"]`);
+    if (node && node._longPressTimer) clearTimeout(node._longPressTimer);
+
+    if (orgTouchMoved && orgTouchDragId) {
+        // Find what we're dropping on
+        const touch = e.changedTouches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (target) {
+            const dropNode = target.closest('.org-node[data-org-dept]');
+            const dropAdd = target.closest('.org-node-add');
+            const dropRoot = target.closest('.org-drop-root');
+
+            let targetParentId = null;
+            if (dropNode) {
+                targetParentId = parseInt(dropNode.dataset.orgDept);
+            } else if (dropRoot || dropAdd) {
+                targetParentId = null;
+            }
+
+            if (dropNode || dropRoot || dropAdd) {
+                // Reuse the drop logic
+                if (targetParentId === orgTouchDragId) {
+                    // dropped on self, ignore
+                } else if (targetParentId !== null && getDescendantIds(orgTouchDragId).includes(targetParentId)) {
+                    toast('Kan niet onder eigen subafdeling plaatsen', 'error');
+                } else {
+                    const dept = state.departments.find(d => d.id === orgTouchDragId);
+                    if (dept) {
+                        dept.parentId = targetParentId;
+                        saveState();
+                        renderOrgChart();
+                        toast(`${dept.name} verplaatst`, 'success');
+                    }
+                }
+            }
+        }
+    }
+
+    orgTouchCleanup();
+}
+
+function orgTouchCleanup() {
+    if (orgTouchClone) { orgTouchClone.remove(); orgTouchClone = null; }
+    document.querySelectorAll('.org-node.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over').forEach(el => el.classList.remove('drag-over'));
+    document.querySelectorAll('.org-drop-root.drag-active').forEach(el => el.classList.remove('drag-active'));
+    orgTouchDragId = null;
+    orgTouchMoved = false;
+    document.removeEventListener('touchmove', orgTouchMove);
+    document.removeEventListener('touchend', orgTouchEnd);
+}
 
 // ===== INIT =====
 loadState();
