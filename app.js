@@ -295,6 +295,7 @@ function switchView(view) {
         n.classList.toggle('active', n.dataset.view === view);
     });
     updateFab();
+    document.getElementById('org-toolbar').style.display = view === 'orgchart' ? 'flex' : 'none';
     renderView();
     if (view === 'settings') {
         loadCompanyProfile();

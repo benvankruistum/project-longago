@@ -1320,6 +1320,7 @@ body {
     -webkit-overflow-scrolling: touch;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
 }
 
 .welcome-overlay.hidden { display: none; }

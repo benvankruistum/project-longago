@@ -102,21 +102,6 @@
     <!-- Organogram -->
     <div class="view" id="view-orgchart">
         <div id="orgchart-container" class="orgchart-container"></div>
-        <div class="org-toolbar" id="org-toolbar">
-            <div class="org-zoom-controls">
-                <button class="org-zoom-btn" onclick="orgZoomChange(-0.1)">&minus;</button>
-                <button class="org-zoom-btn" onclick="orgZoomChange(0.1)">+</button>
-                <button class="org-zoom-btn" onclick="orgZoomReset()">1:1</button>
-            </div>
-            <button class="org-drag-lock" id="org-drag-lock" onclick="toggleOrgDragLock()">
-                <span id="org-drag-lock-icon"></span>
-                <span class="org-drag-lock-label" id="org-drag-lock-label">Drag uit</span>
-            </button>
-            <button class="org-reset-btn" onclick="resetOrgHierarchy()">
-                <span id="org-reset-icon"></span>
-                <span>Reset</span>
-            </button>
-        </div>
     </div>
 
     <!-- Help & Colofon -->
@@ -297,6 +282,23 @@
             </div>
         </div></div>
     </div>
+</div>
+
+<!-- ORG TOOLBAR (outside .main to avoid stacking/overflow issues on mobile) -->
+<div class="org-toolbar" id="org-toolbar" style="display:none;">
+    <div class="org-zoom-controls">
+        <button class="org-zoom-btn" onclick="orgZoomChange(-0.1)">&minus;</button>
+        <button class="org-zoom-btn" onclick="orgZoomChange(0.1)">+</button>
+        <button class="org-zoom-btn" onclick="orgZoomReset()">1:1</button>
+    </div>
+    <button class="org-drag-lock" id="org-drag-lock" onclick="toggleOrgDragLock()">
+        <span id="org-drag-lock-icon"></span>
+        <span class="org-drag-lock-label" id="org-drag-lock-label">Drag uit</span>
+    </button>
+    <button class="org-reset-btn" onclick="resetOrgHierarchy()">
+        <span id="org-reset-icon"></span>
+        <span>Reset</span>
+    </button>
 </div>
 
 <!-- FAB -->
