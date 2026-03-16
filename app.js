@@ -1445,10 +1445,6 @@ function renderOrgChart() {
         <span class="org-drop-root-text">Verplaats naar root-niveau</span>
     </div>`;
 
-    const lockIcon = orgDragLocked ? icon('drag', 16) : icon('refresh', 16);
-    const lockLabel = orgDragLocked ? 'Drag uit' : 'Drag aan';
-    const lockClass = orgDragLocked ? '' : 'org-drag-unlocked';
-
     container.innerHTML = `
         <div class="orgchart-tree" id="orgchart-tree" style="transform:scale(${orgZoom});transform-origin:top center;">
             <div class="org-children" style="padding-top:0;">
@@ -1458,16 +1454,9 @@ function renderOrgChart() {
             </div>
         </div>
         ${rootDropZone}
-        <div class="org-zoom-controls">
-            <button class="org-zoom-btn" onclick="orgZoomChange(-0.1)">\u2212</button>
-            <button class="org-zoom-btn" onclick="orgZoomChange(0.1)">+</button>
-            <button class="org-zoom-btn" onclick="orgZoomReset()">1:1</button>
-        </div>
-        <button class="org-drag-lock ${lockClass}" id="org-drag-lock" onclick="toggleOrgDragLock()">
-            ${lockIcon}
-            <span class="org-drag-lock-label">${lockLabel}</span>
-        </button>
     `;
+
+    updateOrgToolbar();
 
     requestAnimationFrame(updateOrgConnectors);
     initOrgTouchDrag();
@@ -1508,11 +1497,37 @@ function orgZoomReset() {
     if (tree) tree.style.transform = 'scale(1)';
 }
 
-// === Drag Lock Toggle ===
+// === Org Toolbar (fixed buttons) ===
+function updateOrgToolbar() {
+    const lockBtn = document.getElementById('org-drag-lock');
+    const lockIcon = document.getElementById('org-drag-lock-icon');
+    const lockLabel = document.getElementById('org-drag-lock-label');
+    const resetIcon = document.getElementById('org-reset-icon');
+    if (lockBtn) {
+        lockBtn.className = orgDragLocked ? 'org-drag-lock' : 'org-drag-lock org-drag-unlocked';
+        if (lockIcon) lockIcon.innerHTML = orgDragLocked ? icon('drag', 16) : icon('refresh', 16);
+        if (lockLabel) lockLabel.textContent = orgDragLocked ? 'Drag uit' : 'Drag aan';
+    }
+    if (resetIcon) resetIcon.innerHTML = icon('trash', 16);
+}
+
 function toggleOrgDragLock() {
     orgDragLocked = !orgDragLocked;
     renderOrgChart();
     toast(orgDragLocked ? 'Drag modus uit' : 'Drag modus aan – sleep kaarten om te herordenen', orgDragLocked ? 'warning' : 'success');
+}
+
+function resetOrgHierarchy() {
+    const hasHierarchy = state.departments.some(d => d.parentId);
+    if (!hasHierarchy) {
+        toast('Er is geen hi\u00ebrarchie om te resetten', 'warning');
+        return;
+    }
+    if (!confirm('Weet je zeker dat je de organogram-structuur wilt resetten?\nAlle afdelingen worden naar root-niveau verplaatst.\n(Afdelingen zelf worden niet verwijderd.)')) return;
+    state.departments.forEach(d => { d.parentId = null; });
+    saveState();
+    renderOrgChart();
+    toast('Organogram gereset – alle afdelingen op root-niveau', 'success');
 }
 
 // === Drag & Drop (desktop) ===
@@ -1784,6 +1799,8 @@ function initIcons() {
         'help-icon-star': ['star', 20],
         'help-icon-money': ['money', 20],
         'help-icon-save': ['save', 20],
+        'org-drag-lock-icon': ['drag', 16],
+        'org-reset-icon': ['trash', 16],
     };
     for (const [id, [name, size]] of Object.entries(map)) {
         const el = document.getElementById(id);
