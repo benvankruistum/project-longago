@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wie Zit Waar?</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='10' y='14' width='44' height='46' rx='3' fill='%235B7DB1'/><rect x='10' y='14' width='44' height='8' rx='3' fill='%234A6FA5'/><rect x='18' y='28' width='8' height='8' rx='1.5' fill='%23FDE68A'/><rect x='28' y='28' width='8' height='8' rx='1.5' fill='%23FDE68A'/><rect x='38' y='28' width='8' height='8' rx='1.5' fill='%23FDE68A'/><rect x='18' y='40' width='8' height='8' rx='1.5' fill='%23FDE68A'/><rect x='38' y='40' width='8' height='8' rx='1.5' fill='%23FDE68A'/><rect x='27' y='46' width='10' height='14' rx='2' fill='%23E8985A'/><rect x='10' y='8' width='44' height='8' rx='3' fill='%234A6FA5'/><rect x='26' y='4' width='12' height='6' rx='2' fill='%233B5998'/></svg>">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 <!-- WELCOME SCREEN (first visit) -->
 <div class="welcome-overlay" id="welcome-overlay">
     <div class="welcome-screen">
-        <div class="welcome-logo">&#x1F3E2;</div>
+        <div class="welcome-logo" id="welcome-logo"></div>
         <h1 class="welcome-title">Wie Zit Waar?</h1>
         <p class="welcome-subtitle">Ja hallo, welkom!</p>
 
@@ -24,28 +24,28 @@
 
         <div class="welcome-features">
             <div class="welcome-feature">
-                <span class="welcome-feature-icon">&#x1F464;</span>
+                <span class="welcome-feature-icon" id="wf-icon-person"></span>
                 <div>
                     <strong>Poppetjes maken</strong>
                     <span>Medewerkers aanmaken met rol en FTE</span>
                 </div>
             </div>
             <div class="welcome-feature">
-                <span class="welcome-feature-icon">&#x1F3E0;</span>
+                <span class="welcome-feature-icon" id="wf-icon-house"></span>
                 <div>
                     <strong>Afdelingen vullen</strong>
                     <span>Sleep je mensen naar de juiste plek</span>
                 </div>
             </div>
             <div class="welcome-feature">
-                <span class="welcome-feature-icon">&#x1F4CA;</span>
+                <span class="welcome-feature-icon" id="wf-icon-orgchart"></span>
                 <div>
                     <strong>Organogram bouwen</strong>
                     <span>Boomstructuur met drag &amp; drop</span>
                 </div>
             </div>
             <div class="welcome-feature">
-                <span class="welcome-feature-icon">&#x1F4B0;</span>
+                <span class="welcome-feature-icon" id="wf-icon-money"></span>
                 <div>
                     <strong>Kosten zien</strong>
                     <span>Automatisch op basis van je branche</span>
@@ -75,10 +75,10 @@
 <div class="topbar">
     <h1 id="topbar-title" onclick="switchView('settings')" style="cursor:pointer;">Wie Zit Waar?</h1>
     <div class="score-pills">
-        <div class="pill" id="pill-score">&#x2B50; <span id="score-val">0</span></div>
-        <div class="pill" id="pill-fill">&#x1F4CA; <span id="fill-val">0%</span></div>
-        <div class="pill" id="pill-gaps">&#x26A0;&#xFE0F; <span id="gaps-val">0</span></div>
-        <div class="pill" id="pill-mismatch" style="display:none;">&#x1F504; <span id="mismatch-val">0</span></div>
+        <div class="pill" id="pill-score"><span id="pill-icon-star"></span> <span id="score-val">0</span></div>
+        <div class="pill" id="pill-fill"><span id="pill-icon-chart"></span> <span id="fill-val">0%</span></div>
+        <div class="pill" id="pill-gaps"><span id="pill-icon-warn"></span> <span id="gaps-val">0</span></div>
+        <div class="pill" id="pill-mismatch" style="display:none;"><span id="pill-icon-refresh"></span> <span id="mismatch-val">0</span></div>
     </div>
 </div>
 
@@ -111,35 +111,35 @@
             <p class="help-intro">Zo, je hebt hulp nodig? Geen probleem. Even rustig doorlezen, dan snap je het zo.</p>
 
             <div class="help-section">
-                <h3>&#x1F464; Medewerkers</h3>
+                <h3><span id="help-icon-person"></span> Medewerkers</h3>
                 <p>Ga naar <strong>Mensen</strong> en tik op het plusje. Naam erin, rol kiezen, FTE instellen, kleurtje uitzoeken en klaar. Zo simpel is het. Elk poppetje is een medewerker.</p>
                 <p>FTE staat voor <em>fulltime-equivalent</em>. Iemand van 0.6 FTE werkt 3 dagen. Ja, zo werkt dat.</p>
             </div>
 
             <div class="help-section">
-                <h3>&#x1F3E0; Afdelingen</h3>
+                <h3><span id="help-icon-house"></span> Afdelingen</h3>
                 <p>Bij <strong>Afdelingen</strong> maak je je teams aan. Hoeveel FTE heb je nodig? Wat is de prioriteit? Welke rollen moeten erin? Allemaal instellen.</p>
                 <p>Dan ga je naar het <strong>Overzicht</strong> en sleep je de poppetjes naar de afdelingen. Klopt het plaatje? Mooi. Klopt het niet? Schuiven maar.</p>
             </div>
 
             <div class="help-section">
-                <h3>&#x1F4CA; Organogram</h3>
+                <h3><span id="help-icon-orgchart"></span> Organogram</h3>
                 <p>Wil je zien wie onder wie valt? Het <strong>Organogram</strong> laat je boomstructuur zien. Sleep afdelingen naar elkaar toe om de hi&euml;rarchie aan te passen.</p>
                 <p>Lang indrukken op mobiel, dan kun je slepen. Op de computer gewoon klikken en trekken. Die blauwe "Sleep hierheen" labels helpen je op weg.</p>
             </div>
 
             <div class="help-section">
-                <h3>&#x2B50; Score &amp; Punten</h3>
+                <h3><span id="help-icon-star"></span> Score &amp; Punten</h3>
                 <p>Bovenin zie je je score. Die gaat omhoog als je afdelingen goed vult. Prioriteit telt mee: een hoog-prioriteit afdeling levert meer punten op. Iemand op een verkeerde rol? Strafpunten. Logisch toch?</p>
             </div>
 
             <div class="help-section">
-                <h3>&#x1F4B0; Kostenindicatie</h3>
+                <h3><span id="help-icon-money"></span> Kostenindicatie</h3>
                 <p>Ga naar <strong>Meer</strong>, vul je SBI branchecode in, en je krijgt automatisch salarisindicaties te zien. Gebaseerd op CBS/CPB data. Geen exacte wetenschap, maar het geeft een aardig beeld.</p>
             </div>
 
             <div class="help-section">
-                <h3>&#x1F4BE; Je data</h3>
+                <h3><span id="help-icon-save"></span> Je data</h3>
                 <p>Alles wordt opgeslagen in je browser. Niks gaat naar een server. Je kunt je data exporteren als JSON en later weer importeren. Handig als je van apparaat wisselt.</p>
             </div>
 
@@ -290,19 +290,19 @@
 <!-- BOTTOM NAV -->
 <div class="bottomnav">
     <button class="nav-item active" data-view="canvas" onclick="switchView('canvas')">
-        <span class="nav-icon">&#x1F3AF;</span>Overzicht
+        <span class="nav-icon" id="nav-icon-target"></span>Overzicht
     </button>
     <button class="nav-item" data-view="employees" onclick="switchView('employees')">
-        <span class="nav-icon">&#x1F464;</span>Mensen
+        <span class="nav-icon" id="nav-icon-person"></span>Mensen
     </button>
     <button class="nav-item" data-view="departments" onclick="switchView('departments')">
-        <span class="nav-icon">&#x1F3E0;</span>Afdelingen
+        <span class="nav-icon" id="nav-icon-house"></span>Afdelingen
     </button>
     <button class="nav-item" data-view="orgchart" onclick="switchView('orgchart')">
-        <span class="nav-icon">&#x1F4CA;</span>Organogram
+        <span class="nav-icon" id="nav-icon-orgchart"></span>Organogram
     </button>
     <button class="nav-item" data-view="settings" onclick="switchView('settings')">
-        <span class="nav-icon">&#x2699;&#xFE0F;</span>Meer
+        <span class="nav-icon" id="nav-icon-gear"></span>Meer
     </button>
 </div>
 

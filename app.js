@@ -1,3 +1,29 @@
+// ===== ICONS (multicolor flat SVG) =====
+const ICONS = {
+    building: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="14" width="44" height="46" rx="3" fill="#5B7DB1"/><rect x="10" y="14" width="44" height="8" rx="3" fill="#4A6FA5"/><rect x="18" y="28" width="8" height="8" rx="1.5" fill="#FDE68A"/><rect x="28" y="28" width="8" height="8" rx="1.5" fill="#FDE68A"/><rect x="38" y="28" width="8" height="8" rx="1.5" fill="#FDE68A"/><rect x="18" y="40" width="8" height="8" rx="1.5" fill="#FDE68A"/><rect x="38" y="40" width="8" height="8" rx="1.5" fill="#FDE68A"/><rect x="27" y="46" width="10" height="14" rx="2" fill="#E8985A"/><rect x="10" y="8" width="44" height="8" rx="3" fill="#4A6FA5"/><rect x="26" y="4" width="12" height="6" rx="2" fill="#3B5998"/></svg>`,
+    person: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="18" r="12" fill="#F4A261"/><path d="M12 58c0-11.046 8.954-20 20-20s20 8.954 20 20" fill="#5B9BD5"/><circle cx="27" cy="16" r="2" fill="#333"/><circle cx="37" cy="16" r="2" fill="#333"/><path d="M28 22c0 2.2 1.8 4 4 4s4-1.8 4-4" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+    house: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 30L32 8l24 22H8z" fill="#E8985A"/><rect x="14" y="30" width="36" height="28" fill="#FFF3E0"/><rect x="22" y="36" width="8" height="8" rx="1" fill="#87CEEB"/><rect x="34" y="36" width="8" height="8" rx="1" fill="#87CEEB"/><rect x="27" y="48" width="10" height="10" rx="2" fill="#A0522D"/><circle cx="35" cy="53" r="1" fill="#FFD700"/><path d="M32 8l24 22h-6L32 14 14 30H8L32 8z" fill="#D4764E"/></svg>`,
+    chart: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="36" width="12" height="22" rx="2" fill="#5B9BD5"/><rect x="26" y="20" width="12" height="38" rx="2" fill="#2ECC71"/><rect x="44" y="28" width="12" height="30" rx="2" fill="#F4A261"/><path d="M8 14l16 8 16-6 16 4" stroke="#E74C3C" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="8" cy="14" r="3" fill="#E74C3C"/><circle cx="24" cy="22" r="3" fill="#E74C3C"/><circle cx="40" cy="16" r="3" fill="#E74C3C"/><circle cx="56" cy="20" r="3" fill="#E74C3C"/></svg>`,
+    target: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="28" fill="#FFE0E0"/><circle cx="32" cy="32" r="20" fill="#FFF"/><circle cx="32" cy="32" r="14" fill="#FFB3B3"/><circle cx="32" cy="32" r="8" fill="#FFF"/><circle cx="32" cy="32" r="4" fill="#E74C3C"/><path d="M46 10l6-2-2 6-4 12-12 4 12-4 4-12z" fill="#5B9BD5"/><line x1="36" y1="28" x2="50" y2="14" stroke="#5B9BD5" stroke-width="2"/></svg>`,
+    gear: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M28 6h8l1.5 7.2a22 22 0 015.7 3.3L50 13l4 6.9-5.7 4.8a22 22 0 010 6.6L54 36l-4 6.9-6.8-3.5a22 22 0 01-5.7 3.3L36 50h-8l-1.5-7.3a22 22 0 01-5.7-3.3L14 43l-4-7 5.7-4.8a22 22 0 010-6.6L10 20l4-7 6.8 3.5a22 22 0 015.7-3.3L28 6z" fill="#8E8E93"/><circle cx="32" cy="28" r="9" fill="#FFF"/><circle cx="32" cy="28" r="5" fill="#5B9BD5"/></svg>`,
+    star: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32 4l8.5 17.2L60 24l-14 13.6L49.2 58 32 48.7 14.8 58 18 37.6 4 24l19.5-2.8L32 4z" fill="#FFD700"/><path d="M32 4l8.5 17.2L60 24l-14 13.6L49.2 58 32 48.7V4z" fill="#FFC107"/></svg>`,
+    warning: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30.3 8.5a2 2 0 013.4 0l25 42A2 2 0 0157 54H7a2 2 0 01-1.7-3.5l25-42z" fill="#F39C12"/><rect x="29" y="24" width="6" height="18" rx="3" fill="#FFF"/><circle cx="32" cy="47" r="3" fill="#FFF"/></svg>`,
+    refresh: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 20A22 22 0 0014 44" stroke="#5B9BD5" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M14 44A22 22 0 0050 20" stroke="#2ECC71" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M50 10v14h-14" fill="none" stroke="#5B9BD5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 54V40h14" fill="none" stroke="#2ECC71" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    money: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="28" fill="#2ECC71"/><circle cx="32" cy="32" r="24" fill="#27AE60"/><text x="32" y="42" text-anchor="middle" font-size="30" font-weight="700" fill="#FFF" font-family="sans-serif">\u20ac</text></svg>`,
+    save: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="4" width="48" height="56" rx="4" fill="#5B9BD5"/><rect x="16" y="4" width="28" height="20" rx="2" fill="#3B7DD8"/><rect x="32" y="6" width="8" height="16" rx="1" fill="#2563EB"/><rect x="14" y="32" width="36" height="24" rx="2" fill="#FFF"/><rect x="20" y="38" width="24" height="3" rx="1" fill="#DDD"/><rect x="20" y="44" width="18" height="3" rx="1" fill="#DDD"/><rect x="20" y="50" width="22" height="3" rx="1" fill="#DDD"/></svg>`,
+    edit: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M40.5 7.5l16 16-32 32H8.5v-16l32-32z" fill="#F4A261"/><path d="M40.5 7.5l16 16-4 4-16-16 4-4z" fill="#E8985A"/><path d="M8.5 55.5l4-16 12 12-16 4z" fill="#FDE68A"/><path d="M8.5 55.5l2-8 6 6-8 2z" fill="#333"/></svg>`,
+    trash: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="18" width="36" height="40" rx="4" fill="#E74C3C"/><rect x="10" y="12" width="44" height="8" rx="3" fill="#C0392B"/><rect x="24" y="6" width="16" height="8" rx="3" fill="#E74C3C"/><rect x="22" y="26" width="4" height="24" rx="2" fill="#FFF" opacity="0.4"/><rect x="30" y="26" width="4" height="24" rx="2" fill="#FFF" opacity="0.4"/><rect x="38" y="26" width="4" height="24" rx="2" fill="#FFF" opacity="0.4"/></svg>`,
+    drag: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="16" width="40" height="5" rx="2.5" fill="#CCC"/><rect x="12" y="29" width="40" height="5" rx="2.5" fill="#CCC"/><rect x="12" y="42" width="40" height="5" rx="2.5" fill="#CCC"/></svg>`,
+    worker: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="16" r="11" fill="#F4A261"/><rect x="14" y="34" width="36" height="26" rx="6" fill="#5B9BD5"/><rect x="22" y="38" width="20" height="4" rx="2" fill="#3B7DD8"/><circle cx="28" cy="14" r="1.8" fill="#333"/><circle cx="36" cy="14" r="1.8" fill="#333"/><rect x="24" y="4" width="16" height="8" rx="2" fill="#333"/><rect x="20" y="8" width="24" height="4" rx="1" fill="#333"/></svg>`,
+    orgchart: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="4" width="24" height="14" rx="3" fill="#5B9BD5"/><rect x="4" y="42" width="20" height="14" rx="3" fill="#2ECC71"/><rect x="40" y="42" width="20" height="14" rx="3" fill="#F4A261"/><line x1="32" y1="18" x2="32" y2="30" stroke="#999" stroke-width="2"/><line x1="14" y1="30" x2="50" y2="30" stroke="#999" stroke-width="2"/><line x1="14" y1="30" x2="14" y2="42" stroke="#999" stroke-width="2"/><line x1="50" y1="30" x2="50" y2="42" stroke="#999" stroke-width="2"/></svg>`,
+    arrow: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 32h32M36 20l12 12-12 12" stroke="#999" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+};
+
+function icon(name, size = 24) {
+    const svg = ICONS[name] || '';
+    return `<span class="mc-icon" style="width:${size}px;height:${size}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;">${svg.replace('<svg ', `<svg width="${size}" height="${size}" `)}</span>`;
+}
+
 // ===== STATE =====
 let state = {
     employees: [],
@@ -282,14 +308,14 @@ function fabAction() {
         openSheet(`
             <h2>Wat wil je toevoegen?</h2>
             <div class="pick-item" onclick="closeSheet(); setTimeout(() => openEmployeeSheet(), 350);">
-                <div style="font-size:1.6em;">&#x1F464;</div>
+                <div>${icon('person', 32)}</div>
                 <div class="pick-item-info">
                     <div class="pick-item-name">Medewerker</div>
                     <div class="pick-item-meta">Nieuw poppetje aanmaken</div>
                 </div>
             </div>
             <div class="pick-item" onclick="closeSheet(); setTimeout(() => openDeptSheet(), 350);">
-                <div style="font-size:1.6em;">&#x1F3E0;</div>
+                <div>${icon('house', 32)}</div>
                 <div class="pick-item-info">
                     <div class="pick-item-name">Afdeling</div>
                     <div class="pick-item-meta">Nieuwe afdeling aanmaken</div>
@@ -350,7 +376,7 @@ function renderCanvas() {
 
     if (depts.length === 0) {
         container.innerHTML = `<div class="empty">
-            <div class="empty-icon">&#x1F3AF;</div>
+            <div class="empty-icon">${icon('target', 48)}</div>
             <p>Nog geen afdelingen!<br/>Ga naar <b>Afdelingen</b> om er een aan te maken,<br/>of tik op <b>+</b></p>
         </div>`;
         return;
@@ -370,7 +396,7 @@ function renderCanvas() {
             const assignedRole = a.asRole || emp.role;
             const mismatch = assignedRole !== emp.role;
             const roleTag = mismatch
-                ? `<span class="p-role mismatch">\u26a0\ufe0f ${roleLabel(assignedRole)}</span>`
+                ? `<span class="p-role mismatch">${icon('warning', 12)} ${roleLabel(assignedRole)}</span>`
                 : (a.asRole ? `<span class="p-role">${roleLabel(assignedRole)}</span>` : '');
             poppetjesHTML += `<div class="canvas-poppetje ${mismatch ? 'role-mismatch' : ''}" onclick="openPersonOnDept(${emp.id}, ${dept.id})">
                 ${poppetjeSVG(emp.color, 40)}
@@ -402,12 +428,12 @@ function renderCanvas() {
         html += `<div class="canvas-dept" data-dept-id="${dept.id}">
             <div class="card-color-bar" style="background:${dept.color}"></div>
             <div class="canvas-dept-header">
-                <div class="drag-handle" data-drag="true">&#x2630;</div>
+                <div class="drag-handle" data-drag="true">${icon('drag', 20)}</div>
                 <div style="flex:1" onclick="openDeptSheet(${dept.id})">
                     <div class="canvas-dept-title">${dept.name}</div>
                     <div class="card-sub">${filled.toFixed(1)} / ${dept.fteNeeded.toFixed(1)} FTE &nbsp; <span class="badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span></div>
                 </div>
-                <span style="color:#ccc;font-size:1.2em;" onclick="openDeptSheet(${dept.id})">&#x270F;</span>
+                <span style="font-size:1.2em;" onclick="openDeptSheet(${dept.id})">${icon('edit', 20)}</span>
             </div>
             <div class="canvas-dept-body">
                 <div class="fte-bar">
@@ -516,7 +542,7 @@ function renderEmployees() {
 
     if (state.employees.length === 0) {
         container.innerHTML = `<div class="empty">
-            <div class="empty-icon">&#x1F9D1;&#x200D;&#x1F4BC;</div>
+            <div class="empty-icon">${icon('worker', 48)}</div>
             <p>Nog geen medewerkers!<br/>Tik op <b>+</b> om iemand toe te voegen.</p>
         </div>`;
         return;
@@ -567,7 +593,7 @@ function renderDepartments() {
 
     if (state.departments.length === 0) {
         container.innerHTML = `<div class="empty">
-            <div class="empty-icon">&#x1F3E2;</div>
+            <div class="empty-icon">${icon('building', 48)}</div>
             <p>Nog geen afdelingen!<br/>Tik op <b>+</b> om er een aan te maken.</p>
         </div>`;
         return;
@@ -686,7 +712,7 @@ function openEmployeeSheet(empId) {
     const deleteBtn = emp ? `<button class="btn btn-danger" style="margin-top:12px;" onclick="deleteEmployee(${emp.id})">Verwijderen</button>` : '';
 
     openSheet(`
-        <h2>${emp ? '&#x270F; ' + emp.name : '&#x1F464; Nieuwe Medewerker'}</h2>
+        <h2>${emp ? icon('edit', 20) + ' ' + emp.name : icon('person', 20) + ' Nieuwe Medewerker'}</h2>
         <div class="form-group">
             <label>Naam</label>
             <input type="text" id="f-emp-name" value="${emp ? emp.name : ''}" placeholder="Jan Jansen">
@@ -767,7 +793,7 @@ function openDeptSheet(deptId, defaultParentId) {
     });
 
     openSheet(`
-        <h2>${dept ? '&#x270F; ' + dept.name : '&#x1F3E0; Nieuwe Afdeling'}</h2>
+        <h2>${dept ? icon('edit', 20) + ' ' + dept.name : icon('house', 20) + ' Nieuwe Afdeling'}</h2>
         <div class="form-group">
             <label>Naam</label>
             <input type="text" id="f-dept-name" value="${dept ? dept.name : ''}" placeholder="Engineering">
@@ -875,7 +901,7 @@ function openPickEmployee(deptId) {
         return;
     }
 
-    let html = `<h2>&#x1F464; Kies medewerker voor ${dept.name}</h2>`;
+    let html = `<h2>${icon('person', 20)} Kies medewerker voor ${dept.name}</h2>`;
 
     state.employees.forEach(emp => {
         const alreadyHere = existing.includes(emp.id);
@@ -923,14 +949,14 @@ function openFTEPicker(empId, deptId, existingAlloc) {
                 <label>Rol op deze afdeling</label>
                 <select id="fte-pick-role">${opts}</select>
                 <div id="role-mismatch-hint" style="font-size:0.8em;margin-top:4px;color:var(--accent);display:${currentRole !== emp.role ? 'block' : 'none'};">
-                    \u26a0\ufe0f Afwijkende rol: strafpunten op score
+                    ${icon('warning', 14)} Afwijkende rol: strafpunten op score
                 </div>
             </div>`;
     }
 
     openSheet(`
         <h2 style="text-align:center;">${emp.name}</h2>
-        <p style="text-align:center;color:#999;margin-bottom:8px;">${roleLabel(emp.role)} &#x2192; ${dept.name}</p>
+        <p style="text-align:center;color:#999;margin-bottom:8px;">${roleLabel(emp.role)} ${icon('arrow', 16)} ${dept.name}</p>
         <div style="text-align:center;margin:12px 0;">${poppetjeSVG(emp.color, 64)}</div>
         <p style="text-align:center;font-size:0.85em;color:#999;">Hoeveel FTE op deze afdeling?<br/>Max beschikbaar: ${maxFte}</p>
         <div class="fte-stepper">
@@ -945,7 +971,7 @@ function openFTEPicker(empId, deptId, existingAlloc) {
         <input type="hidden" id="fte-pick-own-role" value="${emp.role}">
         <div class="btn-row">
             <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
-            ${existingAlloc ? `<button class="btn btn-danger" style="flex:0.6" onclick="removeAlloc(${empId},${deptId})">&#x1F5D1;</button>` : ''}
+            ${existingAlloc ? `<button class="btn btn-danger" style="flex:0.6" onclick="removeAlloc(${empId},${deptId})">${icon('trash', 18)}</button>` : ''}
             <button class="btn btn-success" onclick="confirmFTE()">Bevestigen</button>
         </div>
     `);
@@ -1293,7 +1319,7 @@ function renderOrgChart() {
         container.innerHTML = `
             <div class="org-empty-state" onclick="openDeptSheet()">
                 <div class="org-empty-card">
-                    <div class="org-empty-icon">\u{1F3E2}</div>
+                    <div class="org-empty-icon">${icon('building', 48)}</div>
                     <div class="org-empty-title">Start je organogram</div>
                     <div class="org-empty-desc">Tik hier om je eerste afdeling aan te maken</div>
                     <div class="org-empty-hint">
@@ -1631,6 +1657,36 @@ function shouldShowWelcome() {
 }
 
 // ===== INIT =====
+// Inject SVG icons into static HTML elements
+function initIcons() {
+    const map = {
+        'welcome-logo': ['building', 64],
+        'wf-icon-person': ['person', 28],
+        'wf-icon-house': ['house', 28],
+        'wf-icon-orgchart': ['orgchart', 28],
+        'wf-icon-money': ['money', 28],
+        'pill-icon-star': ['star', 14],
+        'pill-icon-chart': ['chart', 14],
+        'pill-icon-warn': ['warning', 14],
+        'pill-icon-refresh': ['refresh', 14],
+        'nav-icon-target': ['target', 24],
+        'nav-icon-person': ['person', 24],
+        'nav-icon-house': ['house', 24],
+        'nav-icon-orgchart': ['orgchart', 24],
+        'nav-icon-gear': ['gear', 24],
+        'help-icon-person': ['person', 20],
+        'help-icon-house': ['house', 20],
+        'help-icon-orgchart': ['orgchart', 20],
+        'help-icon-star': ['star', 20],
+        'help-icon-money': ['money', 20],
+        'help-icon-save': ['save', 20],
+    };
+    for (const [id, [name, size]] of Object.entries(map)) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = icon(name, size);
+    }
+}
+initIcons();
 loadState();
 loadCompanyProfile();
 renderAll();
