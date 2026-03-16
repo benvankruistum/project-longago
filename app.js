@@ -1245,10 +1245,15 @@ function renderOrgNodeHTML(node) {
     });
     if (allocs.length > 5) miniPoppetjes += `<span style="font-size:9px;color:#999;">+${allocs.length - 5}</span>`;
 
+    // Sub-drop zone: always visible between node and children, lights up on drag
+    const subDropZone = `<div class="org-sub-drop" data-drop-parent="${dept.id}"
+        ondragover="orgSubDragOver(event)" ondragleave="orgSubDragLeave(event)" ondrop="orgSubDrop(event, ${dept.id})">
+        <span class="org-sub-drop-label">+ sub</span>
+    </div>`;
+
     let childrenHTML = '';
     if (node.children.length > 0) {
         const childNodes = node.children.map(c => `<div class="org-branch">${renderOrgNodeHTML(c)}</div>`).join('');
-        // Add a "+ new" button as last child
         const addBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet(null, ${dept.id})">
             <span class="org-node-add-icon">+</span>
             <span>Nieuw</span>
@@ -1274,42 +1279,58 @@ function renderOrgNodeHTML(node) {
                 ${miniPoppetjes ? `<div class="org-node-poppetjes">${miniPoppetjes}</div>` : ''}
                 <span class="org-node-badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
             </div>
+            <div class="org-node-drop-hint">Sleep hierheen</div>
         </div>
+        ${subDropZone}
         ${childrenHTML}
     `;
 }
 
 function renderOrgChart() {
     const container = document.getElementById('orgchart-container');
-    const tree = buildOrgTree(null);
 
-    if (tree.length === 0 && state.departments.length === 0) {
-        container.innerHTML = `<div class="empty">
-            <div class="empty-icon">\u{1F4CA}</div>
-            <p>Nog geen afdelingen!<br/>Tik op <b>+</b> om er een aan te maken.</p>
-        </div>`;
+    if (state.departments.length === 0) {
+        container.innerHTML = `
+            <div class="org-empty-state" onclick="openDeptSheet()">
+                <div class="org-empty-card">
+                    <div class="org-empty-icon">\u{1F3E2}</div>
+                    <div class="org-empty-title">Start je organogram</div>
+                    <div class="org-empty-desc">Tik hier om je eerste afdeling aan te maken</div>
+                    <div class="org-empty-hint">
+                        <span class="org-empty-plus">+</span>
+                        Nieuwe afdeling
+                    </div>
+                </div>
+                <div class="org-empty-preview">
+                    <div class="org-empty-mini"></div>
+                    <div class="org-empty-line-v"></div>
+                    <div class="org-empty-line-h"></div>
+                    <div class="org-empty-children">
+                        <div class="org-empty-mini small"></div>
+                        <div class="org-empty-mini small"></div>
+                    </div>
+                </div>
+            </div>`;
         return;
     }
 
     // Orphans: departments whose parentId references a non-existing dept
     const allIds = new Set(state.departments.map(d => d.id));
-    const orphans = state.departments.filter(d => d.parentId && !allIds.has(d.parentId));
-    orphans.forEach(d => { d.parentId = null; });
+    state.departments.filter(d => d.parentId && !allIds.has(d.parentId)).forEach(d => { d.parentId = null; });
 
-    const treeRefreshed = buildOrgTree(null);
-    const branches = treeRefreshed.map(node => `<div class="org-branch">${renderOrgNodeHTML(node)}</div>`).join('');
+    const tree = buildOrgTree(null);
+    const branches = tree.map(node => `<div class="org-branch">${renderOrgNodeHTML(node)}</div>`).join('');
 
-    // Add "new root dept" button
     const addRootBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet()"
         ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
         <span class="org-node-add-icon">+</span>
         <span>Nieuwe afdeling</span>
     </div></div>`;
 
-    // Drop zone for making things root
     const rootDropZone = `<div class="org-drop-root" id="org-root-drop"
         ondragover="orgRootDragOver(event)" ondragleave="orgRootDragLeave(event)" ondrop="orgDrop(event, null)">
-        Sleep hier om naar root te verplaatsen
+        <span class="org-drop-root-icon">\u2B06\uFE0F</span>
+        <span class="org-drop-root-text">Verplaats naar root-niveau</span>
     </div>`;
 
     container.innerHTML = `
@@ -1327,10 +1348,7 @@ function renderOrgChart() {
         </div>
     `;
 
-    // Calculate connector widths after render
     requestAnimationFrame(updateOrgConnectors);
-
-    // Touch drag support
     initOrgTouchDrag();
 }
 
@@ -1375,10 +1393,10 @@ function orgDragStart(e, deptId) {
     orgDragId = deptId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', deptId);
-    // Delay adding class so the drag image captures correctly
     setTimeout(() => {
         const el = document.querySelector(`.org-node[data-org-dept="${deptId}"]`);
         if (el) el.classList.add('dragging');
+        document.getElementById('orgchart-container').classList.add('org-dragging');
     }, 0);
 }
 
@@ -1386,6 +1404,8 @@ function orgDragEnd(e) {
     document.querySelectorAll('.org-node.dragging').forEach(el => el.classList.remove('dragging'));
     document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over').forEach(el => el.classList.remove('drag-over'));
     document.querySelectorAll('.org-drop-root.drag-active').forEach(el => el.classList.remove('drag-active'));
+    document.querySelectorAll('.org-sub-drop.drag-active').forEach(el => el.classList.remove('drag-active'));
+    document.getElementById('orgchart-container').classList.remove('org-dragging');
     orgDragId = null;
 }
 
@@ -1408,6 +1428,25 @@ function orgRootDragOver(e) {
 
 function orgRootDragLeave(e) {
     e.currentTarget.classList.remove('drag-active');
+}
+
+function orgSubDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-active');
+}
+
+function orgSubDragLeave(e) {
+    e.currentTarget.classList.remove('drag-active');
+}
+
+function orgSubDrop(e, parentDeptId) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-active');
+    orgDrop(e, parentDeptId);
+    return;
 }
 
 function orgDrop(e, targetDeptId) {
@@ -1461,6 +1500,7 @@ function orgTouchStart(e) {
     node._longPressTimer = setTimeout(() => {
         orgTouchMoved = true;
         node.classList.add('dragging');
+        document.getElementById('orgchart-container').classList.add('org-dragging');
 
         // Create floating clone
         const rect = node.getBoundingClientRect();
@@ -1502,9 +1542,9 @@ function orgTouchMove(e) {
 
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     if (target) {
-        const dropNode = target.closest('.org-node[data-org-dept], .org-node-add, .org-drop-root');
+        const dropNode = target.closest('.org-node[data-org-dept], .org-node-add, .org-drop-root, .org-sub-drop');
         if (dropNode) {
-            if (dropNode.classList.contains('org-drop-root')) dropNode.classList.add('drag-active');
+            if (dropNode.classList.contains('org-drop-root') || dropNode.classList.contains('org-sub-drop')) dropNode.classList.add('drag-active');
             else dropNode.classList.add('drag-over');
         }
     }
@@ -1522,15 +1562,18 @@ function orgTouchEnd(e) {
             const dropNode = target.closest('.org-node[data-org-dept]');
             const dropAdd = target.closest('.org-node-add');
             const dropRoot = target.closest('.org-drop-root');
+            const dropSub = target.closest('.org-sub-drop');
 
             let targetParentId = null;
-            if (dropNode) {
+            if (dropSub) {
+                targetParentId = parseInt(dropSub.dataset.dropParent);
+            } else if (dropNode) {
                 targetParentId = parseInt(dropNode.dataset.orgDept);
             } else if (dropRoot || dropAdd) {
                 targetParentId = null;
             }
 
-            if (dropNode || dropRoot || dropAdd) {
+            if (dropNode || dropRoot || dropAdd || dropSub) {
                 // Reuse the drop logic
                 if (targetParentId === orgTouchDragId) {
                     // dropped on self, ignore
@@ -1557,6 +1600,9 @@ function orgTouchCleanup() {
     document.querySelectorAll('.org-node.dragging').forEach(el => el.classList.remove('dragging'));
     document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over').forEach(el => el.classList.remove('drag-over'));
     document.querySelectorAll('.org-drop-root.drag-active').forEach(el => el.classList.remove('drag-active'));
+    document.querySelectorAll('.org-sub-drop.drag-active').forEach(el => el.classList.remove('drag-active'));
+    const oc = document.getElementById('orgchart-container');
+    if (oc) oc.classList.remove('org-dragging');
     orgTouchDragId = null;
     orgTouchMoved = false;
     document.removeEventListener('touchmove', orgTouchMove);
