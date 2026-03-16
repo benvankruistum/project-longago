@@ -2008,6 +2008,7 @@ Maak een optimale verdeling van alle medewerkers over de afdelingen. Houd rekeni
 - FTE-behoeften en min/max grenzen per afdeling
 - Prioriteit van afdelingen (hoog eerst)
 - Een medewerker kan over meerdere afdelingen verdeeld worden (fte opsplitsen)
+- BELANGRIJK: het TOTAAL aan toegewezen FTE per medewerker mag NOOIT meer zijn dan de beschikbare FTE van die medewerker. Voorbeeld: als een medewerker 1.0 FTE heeft, mag de som van alle toewijzingen van die medewerker maximaal 1.0 zijn.
 
 Antwoord ALLEEN in dit JSON formaat, geen andere tekst:
 {"toewijzingen": [{"medewerker": "Naam", "afdeling": "Afdelingsnaam", "fte": 0.8, "alsRol": "rol"}], "toelichting": "korte uitleg van de keuzes"}`;
@@ -2038,14 +2039,39 @@ function showAllocationSuggestion(data) {
     if (data.toelichting) {
         html += `<p style="font-size:0.9em;color:#666;margin-bottom:12px;">${data.toelichting}</p>`;
     }
+
+    // Check for FTE overruns per employee
+    const empTotals = {};
+    data.toewijzingen.forEach(t => {
+        const emp = state.employees.find(e => e.name === t.medewerker);
+        if (emp) {
+            empTotals[emp.name] = (empTotals[emp.name] || 0) + (parseFloat(t.fte) || 0);
+        }
+    });
+    const overruns = [];
+    Object.entries(empTotals).forEach(([name, total]) => {
+        const emp = state.employees.find(e => e.name === name);
+        if (emp && total > emp.fte + 0.001) {
+            overruns.push(`${name}: ${total.toFixed(1)} van ${emp.fte} FTE`);
+        }
+    });
+    if (overruns.length > 0) {
+        html += `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.85em;">
+            ${icon('warning', 16)} <strong>Let op:</strong> Bij toepassen wordt FTE afgekapt op beschikbaar maximum.
+            <div style="margin-top:4px;color:#856404;">${overruns.join('<br>')}</div>
+        </div>`;
+    }
+
     html += '<div style="max-height:50vh;overflow-y:auto;">';
     data.toewijzingen.forEach(t => {
+        const emp = state.employees.find(e => e.name === t.medewerker);
+        const isOver = emp && empTotals[t.medewerker] > emp.fte + 0.001;
         html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
             <div>
                 <strong>${t.medewerker}</strong> → ${t.afdeling}
                 ${t.alsRol ? `<span style="font-size:0.8em;color:var(--accent2);margin-left:6px;">${t.alsRol}</span>` : ''}
             </div>
-            <span style="font-weight:700;color:var(--accent3);">${t.fte} FTE</span>
+            <span style="font-weight:700;color:${isOver ? '#e74c3c' : 'var(--accent3)'};">${t.fte} FTE${isOver ? ' ⚠' : ''}</span>
         </div>`;
     });
     html += '</div>';
@@ -2062,22 +2088,32 @@ function applyAllocationSuggestion() {
     const data = window._aiAllocationData;
     if (!data || !data.toewijzingen) return;
 
-    // Clear existing allocations
-    state.allocations = [];
+    // Build new allocations with FTE cap validation
+    const newAllocs = [];
+    const empFteUsed = {}; // track total FTE assigned per employee
 
     data.toewijzingen.forEach(t => {
         const emp = state.employees.find(e => e.name === t.medewerker);
         const dept = state.departments.find(d => d.name === t.afdeling);
-        if (emp && dept) {
-            state.allocations.push({
-                empId: emp.id,
-                deptId: dept.id,
-                fte: parseFloat(t.fte) || emp.fte,
-                asRole: t.alsRol || ''
-            });
-        }
+        if (!emp || !dept) return;
+
+        const used = empFteUsed[emp.id] || 0;
+        let fte = parseFloat(t.fte) || emp.fte;
+        const remaining = Math.round((emp.fte - used) * 100) / 100;
+
+        if (remaining <= 0) return; // no FTE left for this employee
+        if (fte > remaining) fte = remaining; // cap to remaining FTE
+
+        newAllocs.push({
+            empId: emp.id,
+            deptId: dept.id,
+            fte: Math.round(fte * 100) / 100,
+            asRole: t.alsRol || ''
+        });
+        empFteUsed[emp.id] = used + fte;
     });
 
+    state.allocations = newAllocs;
     saveState();
     renderAll();
     closeSheet();
