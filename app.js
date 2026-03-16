@@ -1247,6 +1247,7 @@ document.addEventListener('click', (e) => {
 // ===== ORGANOGRAM =====
 let orgZoom = 1;
 let orgDragId = null; // dept id being dragged
+let orgDragLocked = true; // drag disabled by default
 
 function buildOrgTree(parentId) {
     return state.departments
@@ -1267,9 +1268,18 @@ function renderOrgNodeHTML(node) {
     let miniPoppetjes = '';
     allocs.slice(0, 5).forEach(a => {
         const emp = state.employees.find(e => e.id === a.empId);
-        if (emp) miniPoppetjes += poppetjeSVG(emp.color, 18);
+        if (emp) miniPoppetjes += poppetjeSVG(emp.color, 16);
     });
-    if (allocs.length > 5) miniPoppetjes += `<span style="font-size:9px;color:#999;">+${allocs.length - 5}</span>`;
+    if (allocs.length > 5) miniPoppetjes += `<span style="font-size:8px;color:#999;">+${allocs.length - 5}</span>`;
+
+    // Collapsible poppetjes section
+    const poppetjesSection = allocs.length > 0
+        ? `<div class="org-node-people-toggle" onclick="event.stopPropagation();this.parentElement.classList.toggle('people-open')">
+            <span class="org-people-count">${allocs.length}</span> ${icon('person', 10)}
+            <span class="org-people-arrow">\u25BE</span>
+          </div>
+          <div class="org-node-poppetjes">${miniPoppetjes}</div>`
+        : '';
 
     // Sub-drop zone: always visible between node and children, lights up on drag
     const subDropZone = `<div class="org-sub-drop" data-drop-parent="${dept.id}"
@@ -1287,8 +1297,9 @@ function renderOrgNodeHTML(node) {
         childrenHTML = `<div class="org-children">${childNodes}${addBtn}</div>`;
     }
 
+    const isDraggable = orgDragLocked ? 'false' : 'true';
     return `
-        <div class="org-node" data-org-dept="${dept.id}" draggable="true"
+        <div class="org-node" data-org-dept="${dept.id}" draggable="${isDraggable}"
              onclick="if(!orgTouchMoved)openDeptSheet(${dept.id})"
              ondragstart="orgDragStart(event, ${dept.id})"
              ondragend="orgDragEnd(event)"
@@ -1302,7 +1313,7 @@ function renderOrgNodeHTML(node) {
                 <div class="org-node-fte-bar">
                     <div class="org-node-fte-fill" style="width:${pct}%;background:${barColor}"></div>
                 </div>
-                ${miniPoppetjes ? `<div class="org-node-poppetjes">${miniPoppetjes}</div>` : ''}
+                ${poppetjesSection}
                 <span class="org-node-badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
             </div>
             <div class="org-node-drop-hint">Sleep hierheen</div>
@@ -1347,22 +1358,41 @@ function renderOrgChart() {
     const tree = buildOrgTree(null);
     const branches = tree.map(node => `<div class="org-branch">${renderOrgNodeHTML(node)}</div>`).join('');
 
+    // Placeholder drop zones under root (always show 2 empty slots if fewer than 2 root items)
+    const rootCount = tree.length;
+    let placeholders = '';
+    if (rootCount < 2) {
+        const needed = 2 - rootCount;
+        for (let i = 0; i < needed; i++) {
+            placeholders += `<div class="org-branch"><div class="org-node-placeholder" onclick="openDeptSheet()"
+                ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
+                <span class="org-placeholder-icon">+</span>
+                <span class="org-placeholder-text">Sleep of maak afdeling</span>
+            </div></div>`;
+        }
+    }
+
     const addRootBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet()"
         ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
         <span class="org-node-add-icon">+</span>
-        <span>Nieuwe afdeling</span>
+        <span>Nieuw</span>
     </div></div>`;
 
     const rootDropZone = `<div class="org-drop-root" id="org-root-drop"
         ondragover="orgRootDragOver(event)" ondragleave="orgRootDragLeave(event)" ondrop="orgDrop(event, null)">
-        <span class="org-drop-root-icon">\u2B06\uFE0F</span>
+        ${icon('arrow', 16)}
         <span class="org-drop-root-text">Verplaats naar root-niveau</span>
     </div>`;
+
+    const lockIcon = orgDragLocked ? icon('drag', 16) : icon('refresh', 16);
+    const lockLabel = orgDragLocked ? 'Drag uit' : 'Drag aan';
+    const lockClass = orgDragLocked ? '' : 'org-drag-unlocked';
 
     container.innerHTML = `
         <div class="orgchart-tree" id="orgchart-tree" style="transform:scale(${orgZoom});transform-origin:top center;">
             <div class="org-children" style="padding-top:0;">
                 ${branches}
+                ${placeholders}
                 ${addRootBtn}
             </div>
         </div>
@@ -1372,6 +1402,10 @@ function renderOrgChart() {
             <button class="org-zoom-btn" onclick="orgZoomChange(0.1)">+</button>
             <button class="org-zoom-btn" onclick="orgZoomReset()">1:1</button>
         </div>
+        <button class="org-drag-lock ${lockClass}" id="org-drag-lock" onclick="toggleOrgDragLock()">
+            ${lockIcon}
+            <span class="org-drag-lock-label">${lockLabel}</span>
+        </button>
     `;
 
     requestAnimationFrame(updateOrgConnectors);
@@ -1413,9 +1447,17 @@ function orgZoomReset() {
     if (tree) tree.style.transform = 'scale(1)';
 }
 
+// === Drag Lock Toggle ===
+function toggleOrgDragLock() {
+    orgDragLocked = !orgDragLocked;
+    renderOrgChart();
+    toast(orgDragLocked ? 'Drag modus uit' : 'Drag modus aan – sleep kaarten om te herordenen', orgDragLocked ? 'warning' : 'success');
+}
+
 // === Drag & Drop (desktop) ===
 function orgDragStart(e, deptId) {
     e.stopPropagation();
+    if (orgDragLocked) { e.preventDefault(); return; }
     orgDragId = deptId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', deptId);
@@ -1512,6 +1554,7 @@ function initOrgTouchDrag() {
 }
 
 function orgTouchStart(e) {
+    if (orgDragLocked) return;
     const node = e.currentTarget;
     const deptId = parseInt(node.dataset.orgDept);
     if (!deptId) return;
