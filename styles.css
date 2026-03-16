@@ -1110,3 +1110,203 @@ body {
 }
 
 .org-zoom-btn:active { transform: scale(0.9); background: #f0f0f0; }
+
+/* ===== WELCOME SCREEN ===== */
+.welcome-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 500;
+    background: var(--bg);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+}
+
+.welcome-overlay.hidden { display: none; }
+
+.welcome-screen {
+    max-width: 420px;
+    padding: 32px 24px 48px;
+    text-align: center;
+}
+
+.welcome-logo {
+    font-size: 4em;
+    margin-bottom: 8px;
+    animation: welcomeBounce 0.6s ease;
+}
+
+@keyframes welcomeBounce {
+    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    50% { transform: scale(1.1) rotate(3deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.welcome-title {
+    font-size: 1.8em;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.welcome-subtitle {
+    font-size: 1.05em;
+    color: #888;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.welcome-pitch {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.welcome-pitch p { margin-bottom: 8px; }
+.welcome-pitch p:last-child { margin-bottom: 0; }
+
+.welcome-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.welcome-feature {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+}
+
+.welcome-feature-icon { font-size: 1.6em; flex-shrink: 0; }
+
+.welcome-feature strong {
+    display: block;
+    font-size: 0.85em;
+    color: var(--text);
+}
+
+.welcome-feature span {
+    font-size: 0.78em;
+    color: #999;
+}
+
+.welcome-cta-text {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+}
+
+.welcome-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.welcome-btn {
+    padding: 14px 24px;
+    font-size: 1em;
+}
+
+.welcome-footer {
+    font-size: 0.75em;
+    color: #aaa;
+    line-height: 1.6;
+}
+
+.welcome-footer a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* ===== HELP & COLOFON PAGE ===== */
+.help-page {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.help-page h2 {
+    font-size: 1.3em;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.help-intro {
+    font-size: 0.95em;
+    color: #888;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.help-section {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.help-section h3 {
+    font-size: 1em;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.help-section p {
+    font-size: 0.88em;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.help-section p:last-child { margin-bottom: 0; }
+
+.help-list {
+    list-style: none;
+    padding: 0;
+}
+
+.help-list li {
+    font-size: 0.88em;
+    line-height: 1.6;
+    color: #555;
+    padding: 6px 0;
+    padding-left: 24px;
+    position: relative;
+}
+
+.help-list li::before {
+    content: '\2713';
+    position: absolute;
+    left: 0;
+    color: var(--accent3);
+    font-weight: 700;
+}
+
+.help-divider {
+    border: none;
+    height: 1px;
+    background: #e0d6c6;
+    margin: 24px 0;
+}
+
+.help-back {
+    margin-top: 20px;
+    text-align: center;
+}

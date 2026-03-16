@@ -1609,12 +1609,38 @@ function orgTouchCleanup() {
     document.removeEventListener('touchend', orgTouchEnd);
 }
 
+// ===== WELCOME SCREEN =====
+function showWelcome() {
+    const overlay = document.getElementById('welcome-overlay');
+    overlay.classList.remove('hidden');
+}
+
+function dismissWelcome(loadDemoData) {
+    const overlay = document.getElementById('welcome-overlay');
+    overlay.classList.add('hidden');
+    try { localStorage.setItem('wiezittwaar_welcomed', '1'); } catch(e) {}
+    if (loadDemoData) {
+        loadDemo();
+    }
+}
+
+function shouldShowWelcome() {
+    try {
+        return !localStorage.getItem('wiezittwaar_welcomed');
+    } catch(e) { return false; }
+}
+
 // ===== INIT =====
 loadState();
 loadCompanyProfile();
 renderAll();
 updateCostOverview();
 
-if (state.employees.length === 0 && state.departments.length === 0) {
-    loadDemo();
+if (shouldShowWelcome()) {
+    showWelcome();
+} else {
+    document.getElementById('welcome-overlay').classList.add('hidden');
+    if (state.employees.length === 0 && state.departments.length === 0) {
+        loadDemo();
+    }
 }

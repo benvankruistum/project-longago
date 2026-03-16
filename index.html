@@ -9,6 +9,68 @@
 </head>
 <body>
 
+<!-- WELCOME SCREEN (first visit) -->
+<div class="welcome-overlay" id="welcome-overlay">
+    <div class="welcome-screen">
+        <div class="welcome-logo">&#x1F3E2;</div>
+        <h1 class="welcome-title">Wie Zit Waar?</h1>
+        <p class="welcome-subtitle">Ja hallo, welkom!</p>
+
+        <div class="welcome-pitch">
+            <p>Luister, je kent het wel. Je hebt een bedrijf, je hebt mensen, en je hebt afdelingen.
+            Maar wie zit waar? Hoeveel FTE heb je nodig? En wat kost dat allemaal?</p>
+            <p><strong>Precies.</strong> Daar is deze tool voor.</p>
+        </div>
+
+        <div class="welcome-features">
+            <div class="welcome-feature">
+                <span class="welcome-feature-icon">&#x1F464;</span>
+                <div>
+                    <strong>Poppetjes maken</strong>
+                    <span>Medewerkers aanmaken met rol en FTE</span>
+                </div>
+            </div>
+            <div class="welcome-feature">
+                <span class="welcome-feature-icon">&#x1F3E0;</span>
+                <div>
+                    <strong>Afdelingen vullen</strong>
+                    <span>Sleep je mensen naar de juiste plek</span>
+                </div>
+            </div>
+            <div class="welcome-feature">
+                <span class="welcome-feature-icon">&#x1F4CA;</span>
+                <div>
+                    <strong>Organogram bouwen</strong>
+                    <span>Boomstructuur met drag &amp; drop</span>
+                </div>
+            </div>
+            <div class="welcome-feature">
+                <span class="welcome-feature-icon">&#x1F4B0;</span>
+                <div>
+                    <strong>Kosten zien</strong>
+                    <span>Automatisch op basis van je branche</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="welcome-cta-text">Nou, waar wacht je op? Ga lekker beginnen!</p>
+
+        <div class="welcome-buttons">
+            <button class="btn btn-success welcome-btn" onclick="dismissWelcome(false)">
+                Aan de slag!
+            </button>
+            <button class="btn btn-outline welcome-btn" onclick="dismissWelcome(true)" style="font-size:0.85em;">
+                Eerst even rondkijken met demo data
+            </button>
+        </div>
+
+        <p class="welcome-footer">
+            Geen account nodig. Alles blijft op je eigen apparaat.<br/>
+            <a href="#" onclick="event.preventDefault(); dismissWelcome(false); setTimeout(() => switchView('help'), 100);">Help &amp; Colofon</a>
+        </p>
+    </div>
+</div>
+
 <!-- TOP BAR -->
 <div class="topbar">
     <h1 id="topbar-title" onclick="switchView('settings')" style="cursor:pointer;">Wie Zit Waar?</h1>
@@ -40,6 +102,73 @@
     <!-- Organogram -->
     <div class="view" id="view-orgchart">
         <div id="orgchart-container" class="orgchart-container"></div>
+    </div>
+
+    <!-- Help & Colofon -->
+    <div class="view" id="view-help">
+        <div class="help-page">
+            <h2>Help &amp; Uitleg</h2>
+            <p class="help-intro">Zo, je hebt hulp nodig? Geen probleem. Even rustig doorlezen, dan snap je het zo.</p>
+
+            <div class="help-section">
+                <h3>&#x1F464; Medewerkers</h3>
+                <p>Ga naar <strong>Mensen</strong> en tik op het plusje. Naam erin, rol kiezen, FTE instellen, kleurtje uitzoeken en klaar. Zo simpel is het. Elk poppetje is een medewerker.</p>
+                <p>FTE staat voor <em>fulltime-equivalent</em>. Iemand van 0.6 FTE werkt 3 dagen. Ja, zo werkt dat.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>&#x1F3E0; Afdelingen</h3>
+                <p>Bij <strong>Afdelingen</strong> maak je je teams aan. Hoeveel FTE heb je nodig? Wat is de prioriteit? Welke rollen moeten erin? Allemaal instellen.</p>
+                <p>Dan ga je naar het <strong>Overzicht</strong> en sleep je de poppetjes naar de afdelingen. Klopt het plaatje? Mooi. Klopt het niet? Schuiven maar.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>&#x1F4CA; Organogram</h3>
+                <p>Wil je zien wie onder wie valt? Het <strong>Organogram</strong> laat je boomstructuur zien. Sleep afdelingen naar elkaar toe om de hi&euml;rarchie aan te passen.</p>
+                <p>Lang indrukken op mobiel, dan kun je slepen. Op de computer gewoon klikken en trekken. Die blauwe "Sleep hierheen" labels helpen je op weg.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>&#x2B50; Score &amp; Punten</h3>
+                <p>Bovenin zie je je score. Die gaat omhoog als je afdelingen goed vult. Prioriteit telt mee: een hoog-prioriteit afdeling levert meer punten op. Iemand op een verkeerde rol? Strafpunten. Logisch toch?</p>
+            </div>
+
+            <div class="help-section">
+                <h3>&#x1F4B0; Kostenindicatie</h3>
+                <p>Ga naar <strong>Meer</strong>, vul je SBI branchecode in, en je krijgt automatisch salarisindicaties te zien. Gebaseerd op CBS/CPB data. Geen exacte wetenschap, maar het geeft een aardig beeld.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>&#x1F4BE; Je data</h3>
+                <p>Alles wordt opgeslagen in je browser. Niks gaat naar een server. Je kunt je data exporteren als JSON en later weer importeren. Handig als je van apparaat wisselt.</p>
+            </div>
+
+            <hr class="help-divider"/>
+
+            <h2>Colofon</h2>
+            <div class="help-section">
+                <p><strong>Wie Zit Waar?</strong> is een open tool voor personeelsplanning en organisatiestructuur. Gemaakt met liefde, frustratie over Excel-planningen, en te veel koffie.</p>
+                <p>Salarisdata op basis van CBS StatLine en CPB ramingen 2025-2026. SBI-codes conform Standaard Bedrijfsindeling 2008 (KvK/CBS).</p>
+            </div>
+
+            <hr class="help-divider"/>
+
+            <h2>Privacy</h2>
+            <div class="help-section">
+                <p>Even serieus nu. Je privacy is belangrijk, dus dit is hoe het zit:</p>
+                <ul class="help-list">
+                    <li><strong>Geen server, geen cloud.</strong> Alle data blijft in je browser (localStorage). Er wordt niks verstuurd.</li>
+                    <li><strong>Geen tracking.</strong> Geen Google Analytics, geen cookies, geen pixels, geen flauwekul.</li>
+                    <li><strong>Geen account.</strong> Je hoeft nergens in te loggen. We weten niet wie je bent en dat willen we ook niet weten.</li>
+                    <li><strong>Jij bent de baas.</strong> Exporteer je data wanneer je wilt, wis alles wanneer je wilt. Zo hoort dat.</li>
+                </ul>
+                <p style="margin-top:12px;"><em>Kort samengevat: wij hebben je data niet, willen je data niet, en krijgen je data niet. Klaar.</em></p>
+            </div>
+
+            <div class="help-back">
+                <button class="btn btn-outline" onclick="switchView('settings')">Terug naar instellingen</button>
+            </div>
+        </div>
     </div>
 
     <!-- Instellingen -->
@@ -125,6 +254,31 @@
                     <div class="setting-desc">Vul met voorbeelddata om te testen</div>
                 </div>
                 <button class="btn btn-sm btn-primary" onclick="loadDemo()">Laden</button>
+            </div>
+        </div></div>
+
+        <h3 style="margin:16px 0 8px;font-size:0.9em;color:#888;">Info</h3>
+        <div class="card"><div class="card-body">
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">Help &amp; Uitleg</div>
+                    <div class="setting-desc">Hoe werkt het allemaal?</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="switchView('help')">Bekijk</button>
+            </div>
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">Welkomstscherm</div>
+                    <div class="setting-desc">Laat de introductie opnieuw zien</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="showWelcome()">Tonen</button>
+            </div>
+            <div class="setting-row" style="border:none;">
+                <div>
+                    <div class="setting-label">Privacy &amp; Colofon</div>
+                    <div class="setting-desc">Hoe we met je data omgaan</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="switchView('help')">Lees</button>
             </div>
         </div></div>
     </div>
