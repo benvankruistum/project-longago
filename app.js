@@ -2010,6 +2010,13 @@ Maak een optimale verdeling van alle medewerkers over de afdelingen. Houd rekeni
 - Een medewerker kan over meerdere afdelingen verdeeld worden (fte opsplitsen)
 - BELANGRIJK: het TOTAAL aan toegewezen FTE per medewerker mag NOOIT meer zijn dan de beschikbare FTE van die medewerker. Voorbeeld: als een medewerker 1.0 FTE heeft, mag de som van alle toewijzingen van die medewerker maximaal 1.0 zijn.
 
+ROLREGELS (strikt naleven):
+- Wijs medewerkers ALLEEN toe aan afdelingen waar hun rol past. Een designer hoort NIET op een developer-afdeling en vice versa.
+- Het veld "alsRol" moet altijd de EIGEN rol van de medewerker zijn, NIET een andere rol. Een designer blijft een designer, een developer blijft een developer.
+- Als een afdeling vraagt om rollen die geen enkele medewerker heeft, laat die posities dan OPEN. Liever onderbezet dan verkeerd bezet.
+- Verwante rollen mogen alleen als het realistisch is: bijv. een marketeer mag op sales als er geen betere match is, maar een designer mag NIET op development.
+- Als er medewerkers overblijven die nergens passen, vermeld dit in de toelichting.
+
 Antwoord ALLEEN in dit JSON formaat, geen andere tekst:
 {"toewijzingen": [{"medewerker": "Naam", "afdeling": "Afdelingsnaam", "fte": 0.8, "alsRol": "rol"}], "toelichting": "korte uitleg van de keuzes"}`;
 
@@ -2055,10 +2062,26 @@ function showAllocationSuggestion(data) {
             overruns.push(`${name}: ${total.toFixed(1)} van ${emp.fte} FTE`);
         }
     });
+
+    // Check for role mismatches (e.g. designer assigned as developer)
+    const roleMismatches = [];
+    data.toewijzingen.forEach(t => {
+        const emp = state.employees.find(e => e.name === t.medewerker);
+        if (emp && t.alsRol && t.alsRol.toLowerCase() !== (emp.role || '').toLowerCase()) {
+            roleMismatches.push(`${emp.name} (${roleLabel(emp.role)}) als ${t.alsRol}`);
+        }
+    });
+
     if (overruns.length > 0) {
         html += `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.85em;">
-            ${icon('warning', 16)} <strong>Let op:</strong> Bij toepassen wordt FTE afgekapt op beschikbaar maximum.
+            ${icon('warning', 16)} <strong>FTE overschrijding:</strong> Bij toepassen wordt FTE afgekapt op beschikbaar maximum.
             <div style="margin-top:4px;color:#856404;">${overruns.join('<br>')}</div>
+        </div>`;
+    }
+    if (roleMismatches.length > 0) {
+        html += `<div style="background:#fce4ec;border:1px solid #e91e63;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.85em;">
+            ${icon('warning', 16)} <strong>Rol mismatch:</strong> Deze medewerkers zijn op een andere rol ingezet dan hun eigen functie:
+            <div style="margin-top:4px;color:#880e4f;">${roleMismatches.join('<br>')}</div>
         </div>`;
     }
 
@@ -2066,10 +2089,11 @@ function showAllocationSuggestion(data) {
     data.toewijzingen.forEach(t => {
         const emp = state.employees.find(e => e.name === t.medewerker);
         const isOver = emp && empTotals[t.medewerker] > emp.fte + 0.001;
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+        const isMismatch = emp && t.alsRol && t.alsRol.toLowerCase() !== (emp.role || '').toLowerCase();
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;${isMismatch ? 'background:#fce4ec;margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:6px;' : ''}">
             <div>
                 <strong>${t.medewerker}</strong> → ${t.afdeling}
-                ${t.alsRol ? `<span style="font-size:0.8em;color:var(--accent2);margin-left:6px;">${t.alsRol}</span>` : ''}
+                ${t.alsRol ? `<span style="font-size:0.8em;color:${isMismatch ? '#e91e63' : 'var(--accent2)'};margin-left:6px;">${isMismatch ? '⚠ ' : ''}${t.alsRol}</span>` : ''}
             </div>
             <span style="font-weight:700;color:${isOver ? '#e74c3c' : 'var(--accent3)'};">${t.fte} FTE${isOver ? ' ⚠' : ''}</span>
         </div>`;
