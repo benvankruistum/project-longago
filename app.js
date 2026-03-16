@@ -1143,9 +1143,20 @@ function handleImport(event) {
 }
 
 function resetAll() {
-    if (!confirm('Alle data wissen? Dit kan niet ongedaan worden!')) return;
-    state = { employees: [], departments: [], allocations: [], deptOrder: [], company: { name:'', sbiCode:'', sbiLabel:'', type:'' }, nextEmpId: 1, nextDeptId: 1 };
+    openSheet(`
+        <h2>${icon('trash', 20)} Alles wissen?</h2>
+        <p style="color:#666;margin-bottom:16px;">Alle medewerkers, afdelingen en toewijzingen worden verwijderd. Dit kan niet ongedaan worden!</p>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-danger" onclick="confirmResetAll()">Wissen</button>
+        </div>
+    `);
+}
+
+function confirmResetAll() {
+    state = { employees: [], departments: [], allocations: [], deptOrder: [], company: { name:'', sbiCode:'', sbiLabel:'', type:'', employeeCount:'' }, nextEmpId: 1, nextDeptId: 1 };
     saveState();
+    closeSheet();
     renderAll();
     toast('Alles gewist', 'success');
 }
@@ -1542,11 +1553,22 @@ function resetOrgHierarchy() {
         toast('Er is geen hi\u00ebrarchie om te resetten', 'warning');
         return;
     }
-    if (!confirm('Weet je zeker dat je de organogram-structuur wilt resetten?\nAlle afdelingen worden naar root-niveau verplaatst.\n(Afdelingen zelf worden niet verwijderd.)')) return;
+    openSheet(`
+        <h2>${icon('trash', 20)} Organogram resetten?</h2>
+        <p style="color:#666;margin-bottom:16px;">Alle afdelingen worden naar root-niveau verplaatst. Afdelingen zelf worden niet verwijderd.</p>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-danger" onclick="confirmResetOrgHierarchy()">Resetten</button>
+        </div>
+    `);
+}
+
+function confirmResetOrgHierarchy() {
     state.departments.forEach(d => { d.parentId = null; });
     saveState();
+    closeSheet();
     renderOrgChart();
-    toast('Organogram gereset – alle afdelingen op root-niveau', 'success');
+    toast('Organogram gereset \u2013 alle afdelingen op root-niveau', 'success');
 }
 
 // === Drag & Drop (desktop) ===
