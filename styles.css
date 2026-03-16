@@ -316,6 +316,28 @@ body {
     margin: 10px auto 6px;
 }
 
+.sheet-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    font-size: 1.3em;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+}
+
+.sheet-close:active { background: #ddd; color: #333; }
+
 .sheet-content { padding: 10px 20px 30px; }
 .sheet-content h2 { font-size: 1.2em; margin-bottom: 16px; }
 
