@@ -334,7 +334,7 @@ function fabAction() {
 function updateFab() {
     const fab = document.getElementById('fab');
     const label = document.getElementById('fab-label');
-    const labels = { canvas: 'Toevoegen', employees: 'Medewerker', departments: 'Afdeling', orgchart: 'Afdeling' };
+    const labels = { canvas: 'Toevoegen', employees: 'Medewerker', departments: 'Afdeling' };
 
     if (labels[currentView]) {
         label.textContent = labels[currentView];
