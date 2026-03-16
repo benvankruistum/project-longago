@@ -680,6 +680,67 @@ function updateScores() {
     pm.className = `pill ${mismatchPenalty > 50 ? 'bad' : mismatchPenalty > 0 ? 'warn' : 'good'}`;
 }
 
+// ===== PILL TOOLTIPS =====
+let activeTooltip = null;
+let tooltipTimeout = null;
+
+const PILL_TOOLTIPS = {
+    'pill-score': () => {
+        const sv = document.getElementById('score-val').textContent;
+        return `<strong>Score: ${sv}</strong><br>Punten op basis van bezetting. Hoge prioriteit = meer punten. Verkeerde rollen kosten strafpunten.`;
+    },
+    'pill-fill': () => {
+        const fv = document.getElementById('fill-val').textContent;
+        return `<strong>Bezetting: ${fv}</strong><br>Percentage van alle FTE-plekken dat ingevuld is over alle afdelingen.`;
+    },
+    'pill-gaps': () => {
+        const gv = document.getElementById('gaps-val').textContent;
+        return `<strong>Tekorten: ${gv}</strong><br>Aantal afdelingen dat onder de minimale of benodigde FTE zit.`;
+    },
+    'pill-mismatch': () => {
+        const mv = document.getElementById('mismatch-val').textContent;
+        return `<strong>Strafpunten: ${mv}</strong><br>Aftrek omdat medewerkers op een andere rol zijn ingedeeld dan hun eigen functie.`;
+    }
+};
+
+function showPillTooltip(e) {
+    dismissPillTooltip();
+    const pill = e.currentTarget;
+    const id = pill.id;
+    const fn = PILL_TOOLTIPS[id];
+    if (!fn) return;
+
+    const tip = document.createElement('div');
+    tip.className = 'pill-tooltip';
+    tip.innerHTML = fn();
+    document.body.appendChild(tip);
+    activeTooltip = tip;
+
+    // Position below the pill
+    const rect = pill.getBoundingClientRect();
+    const tipW = tip.offsetWidth;
+    let left = rect.left + rect.width / 2 - tipW / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+    tip.style.left = left + 'px';
+    tip.style.top = (rect.bottom + 8) + 'px';
+
+    tooltipTimeout = setTimeout(dismissPillTooltip, 3000);
+}
+
+function dismissPillTooltip() {
+    if (activeTooltip) { activeTooltip.remove(); activeTooltip = null; }
+    if (tooltipTimeout) { clearTimeout(tooltipTimeout); tooltipTimeout = null; }
+}
+
+// Attach tooltip listeners after DOM ready
+document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPillTooltip(e);
+    });
+});
+document.addEventListener('click', dismissPillTooltip);
+
 // ===== BOTTOM SHEETS =====
 function openSheet(html) {
     document.getElementById('sheet-content').innerHTML = html;
@@ -1228,7 +1289,7 @@ function loadCompanyProfile() {
     document.getElementById('company-type').value = state.company.type || '';
     if (state.company.sbiCode) {
         document.getElementById('sbi-selected').innerHTML =
-            `<strong>${state.company.sbiCode}</strong> \u2014 ${state.company.sbiLabel} \u2705`;
+            `<strong>${state.company.sbiCode}</strong> \u2014 ${state.company.sbiLabel} <span style="color:var(--accent3);">\u2713</span>`;
         updateSalaryIndicator();
     }
     updateTopbarTitle();
