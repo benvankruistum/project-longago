@@ -1231,6 +1231,150 @@ body {
     margin: -12px auto 0;
 }
 
+/* Org start button (empty state) */
+.org-start-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 32px;
+    background: white;
+    border: 2px dashed #ccc;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #666;
+    transition: all 0.2s;
+}
+.org-start-btn:hover, .org-start-btn:active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(52,152,219,0.04);
+}
+.org-start-plus {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent2);
+    color: white;
+    font-size: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 300;
+}
+
+/* Org node wrapper: holds node + left/right plus buttons */
+.org-node-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    position: relative;
+}
+
+/* Plus buttons around org nodes */
+.org-plus-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px dashed #ccc;
+    background: white;
+    color: #999;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.6;
+}
+.org-plus-btn:hover, .org-plus-btn:active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(52,152,219,0.08);
+    opacity: 1;
+}
+.org-plus-left, .org-plus-right {
+    margin-top: 24px;
+}
+.org-plus-below {
+    display: block;
+    margin: 4px auto 0;
+}
+
+/* Org Picker (bottom sheet content) */
+.org-picker-new {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--accent2);
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: background 0.2s;
+    margin-bottom: 12px;
+}
+.org-picker-new:active { background: #2980b9; }
+.org-picker-new-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    font-weight: 300;
+}
+.org-picker-divider {
+    text-align: center;
+    color: #999;
+    font-size: 0.8em;
+    margin: 12px 0 8px;
+    position: relative;
+}
+.org-picker-divider::before, .org-picker-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: #e0e0e0;
+}
+.org-picker-divider::before { left: 0; }
+.org-picker-divider::after { right: 0; }
+.org-picker-list {
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.org-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.org-picker-item:active { background: #f0f0f0; }
+.org-picker-color {
+    width: 8px;
+    height: 32px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.org-picker-info { flex: 1; }
+.org-picker-name { font-weight: 600; font-size: 0.95em; }
+.org-picker-meta { font-size: 0.8em; color: #999; }
+
 /* Org toolbar (fixed bottom, inside view-orgchart so auto-hidden) */
 .org-toolbar {
     position: fixed;

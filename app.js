@@ -1378,37 +1378,44 @@ function renderOrgNodeHTML(node) {
         <span class="org-sub-drop-label">+ sub</span>
     </div>`;
 
+    // Plus buttons: left, right, below
+    const parentIdVal = dept.parentId || null;
+    const plusLeft = `<button class="org-plus-btn org-plus-left" onclick="event.stopPropagation();openOrgPlacePicker('left', ${parentIdVal}, ${dept.id})" title="Afdeling links">+</button>`;
+    const plusRight = `<button class="org-plus-btn org-plus-right" onclick="event.stopPropagation();openOrgPlacePicker('right', ${parentIdVal}, ${dept.id})" title="Afdeling rechts">+</button>`;
+    const plusBelow = `<button class="org-plus-btn org-plus-below" onclick="event.stopPropagation();openOrgPlacePicker('below', ${dept.id}, null)" title="Subafdeling">+</button>`;
+
     let childrenHTML = '';
     if (node.children.length > 0) {
         const childNodes = node.children.map(c => `<div class="org-branch">${renderOrgNodeHTML(c)}</div>`).join('');
-        const addBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet(null, ${dept.id})">
-            <span class="org-node-add-icon">+</span>
-            <span>Nieuw</span>
-        </div></div>`;
-        childrenHTML = `<div class="org-children">${childNodes}${addBtn}</div>`;
+        childrenHTML = `<div class="org-children">${childNodes}</div>`;
     }
 
     const isDraggable = orgDragLocked ? 'false' : 'true';
     return `
-        <div class="org-node" data-org-dept="${dept.id}" draggable="${isDraggable}"
-             onclick="if(!orgTouchMoved)openDeptSheet(${dept.id})"
-             ondragstart="orgDragStart(event, ${dept.id})"
-             ondragend="orgDragEnd(event)"
-             ondragover="orgDragOver(event)"
-             ondragleave="orgDragLeave(event)"
-             ondrop="orgDrop(event, ${dept.id})">
-            <div class="org-node-bar" style="background:${dept.color}"></div>
-            <div class="org-node-body">
-                <div class="org-node-name">${dept.name}</div>
-                <div class="org-node-meta">${filled.toFixed(1)}/${dept.fteNeeded.toFixed(1)} FTE</div>
-                <div class="org-node-fte-bar">
-                    <div class="org-node-fte-fill" style="width:${pct}%;background:${barColor}"></div>
+        <div class="org-node-wrapper">
+            ${plusLeft}
+            <div class="org-node" data-org-dept="${dept.id}" draggable="${isDraggable}"
+                 onclick="if(!orgTouchMoved)openDeptSheet(${dept.id})"
+                 ondragstart="orgDragStart(event, ${dept.id})"
+                 ondragend="orgDragEnd(event)"
+                 ondragover="orgDragOver(event)"
+                 ondragleave="orgDragLeave(event)"
+                 ondrop="orgDrop(event, ${dept.id})">
+                <div class="org-node-bar" style="background:${dept.color}"></div>
+                <div class="org-node-body">
+                    <div class="org-node-name">${dept.name}</div>
+                    <div class="org-node-meta">${filled.toFixed(1)}/${dept.fteNeeded.toFixed(1)} FTE</div>
+                    <div class="org-node-fte-bar">
+                        <div class="org-node-fte-fill" style="width:${pct}%;background:${barColor}"></div>
+                    </div>
+                    ${poppetjesSection}
+                    <span class="org-node-badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
                 </div>
-                ${poppetjesSection}
-                <span class="org-node-badge badge-${dept.priority}">${priorityLabel(dept.priority)}</span>
+                <div class="org-node-drop-hint">Sleep hierheen</div>
             </div>
-            <div class="org-node-drop-hint">Sleep hierheen</div>
+            ${plusRight}
         </div>
+        ${plusBelow}
         ${subDropZone}
         ${childrenHTML}
     `;
@@ -1419,25 +1426,11 @@ function renderOrgChart() {
 
     if (state.departments.length === 0) {
         container.innerHTML = `
-            <div class="org-empty-state" onclick="openDeptSheet()">
-                <div class="org-empty-card">
-                    <div class="org-empty-icon">${icon('building', 48)}</div>
-                    <div class="org-empty-title">Start je organogram</div>
-                    <div class="org-empty-desc">Tik hier om je eerste afdeling aan te maken</div>
-                    <div class="org-empty-hint">
-                        <span class="org-empty-plus">+</span>
-                        Nieuwe afdeling
-                    </div>
-                </div>
-                <div class="org-empty-preview">
-                    <div class="org-empty-mini"></div>
-                    <div class="org-empty-line-v"></div>
-                    <div class="org-empty-line-h"></div>
-                    <div class="org-empty-children">
-                        <div class="org-empty-mini small"></div>
-                        <div class="org-empty-mini small"></div>
-                    </div>
-                </div>
+            <div class="org-empty-state">
+                <button class="org-start-btn" onclick="openOrgPlacePicker('below', null, null)">
+                    <span class="org-start-plus">+</span>
+                    <span>Eerste afdeling toevoegen</span>
+                </button>
             </div>`;
         return;
     }
@@ -1449,26 +1442,6 @@ function renderOrgChart() {
     const tree = buildOrgTree(null);
     const branches = tree.map(node => `<div class="org-branch">${renderOrgNodeHTML(node)}</div>`).join('');
 
-    // Placeholder drop zones under root (always show 2 empty slots if fewer than 2 root items)
-    const rootCount = tree.length;
-    let placeholders = '';
-    if (rootCount < 2) {
-        const needed = 2 - rootCount;
-        for (let i = 0; i < needed; i++) {
-            placeholders += `<div class="org-branch"><div class="org-node-placeholder" onclick="openDeptSheet()"
-                ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
-                <span class="org-placeholder-icon">+</span>
-                <span class="org-placeholder-text">Sleep of maak afdeling</span>
-            </div></div>`;
-        }
-    }
-
-    const addRootBtn = `<div class="org-branch"><div class="org-node-add" onclick="openDeptSheet()"
-        ondragover="orgDragOver(event)" ondragleave="orgDragLeave(event)" ondrop="orgDrop(event, null)">
-        <span class="org-node-add-icon">+</span>
-        <span>Nieuw</span>
-    </div></div>`;
-
     const rootDropZone = `<div class="org-drop-root" id="org-root-drop"
         ondragover="orgRootDragOver(event)" ondragleave="orgRootDragLeave(event)" ondrop="orgDrop(event, null)">
         ${icon('arrow', 16)}
@@ -1479,8 +1452,6 @@ function renderOrgChart() {
         <div class="orgchart-tree" id="orgchart-tree" style="transform:scale(${orgZoom});transform-origin:top center;">
             <div class="org-children" style="padding-top:0;">
                 ${branches}
-                ${placeholders}
-                ${addRootBtn}
             </div>
         </div>
         ${rootDropZone}
@@ -1512,6 +1483,74 @@ function updateOrgConnectors() {
             container.style.setProperty('--org-half-width', halfWidth + 'px');
         }
     });
+}
+
+// === Organogram Place Picker ===
+function openOrgPlacePicker(position, parentId, siblingId) {
+    // position: 'left', 'right', 'below'
+    // parentId: the parent dept id (null for root)
+    // siblingId: the sibling dept id (for left/right positioning)
+
+    const title = position === 'below' ? 'Subafdeling toevoegen' : 'Afdeling toevoegen';
+    const desc = position === 'below' ? 'Kies een bestaande afdeling of maak een nieuwe aan als subafdeling.'
+        : `Kies een bestaande afdeling of maak een nieuwe aan (${position === 'left' ? 'links' : 'rechts'}).`;
+
+    // Show existing departments that could be moved here
+    let deptListHTML = '';
+    state.departments.forEach(d => {
+        // Exclude the sibling itself and its descendants to prevent cycles
+        const excludeIds = siblingId ? [siblingId, ...getDescendantIds(siblingId)] : [];
+        if (parentId !== null && parentId !== undefined) {
+            excludeIds.push(parentId, ...getDescendantIds(parentId));
+        }
+        if (excludeIds.includes(d.id)) return;
+
+        const filled = getDeptFilled(d.id);
+        deptListHTML += `<div class="org-picker-item" onclick="placeOrgDept(${d.id}, '${position}', ${parentId}, ${siblingId})">
+            <div class="org-picker-color" style="background:${d.color}"></div>
+            <div class="org-picker-info">
+                <div class="org-picker-name">${d.name}</div>
+                <div class="org-picker-meta">${filled.toFixed(1)}/${d.fteNeeded.toFixed(1)} FTE</div>
+            </div>
+            ${icon('arrow', 16)}
+        </div>`;
+    });
+
+    const newParentId = position === 'below' ? parentId : parentId;
+    openSheet(`
+        <h2>${icon('building', 20)} ${title}</h2>
+        <p style="color:#666;margin-bottom:12px;font-size:0.9em;">${desc}</p>
+        <div class="org-picker-new" onclick="closeSheet();openDeptSheet(null, ${newParentId})">
+            <span class="org-picker-new-icon">+</span>
+            <span>Nieuwe afdeling aanmaken</span>
+        </div>
+        ${deptListHTML ? `<div class="org-picker-divider">Of verplaats een bestaande</div>
+        <div class="org-picker-list">${deptListHTML}</div>` : ''}
+    `);
+}
+
+function placeOrgDept(deptId, position, parentId, siblingId) {
+    const dept = state.departments.find(d => d.id === deptId);
+    if (!dept) return;
+
+    // Prevent cycles
+    if (parentId && getDescendantIds(deptId).includes(parentId)) {
+        toast('Kan niet onder eigen subafdeling plaatsen', 'error');
+        closeSheet();
+        return;
+    }
+
+    if (position === 'below') {
+        dept.parentId = parentId || null;
+    } else {
+        // left or right: same parent as sibling
+        dept.parentId = parentId || null;
+    }
+
+    saveState();
+    closeSheet();
+    renderOrgChart();
+    toast(`${dept.name} geplaatst`, 'success');
 }
 
 // Zoom
