@@ -1663,6 +1663,7 @@ let orgTouchClone = null;
 let orgTouchStartX = 0;
 let orgTouchStartY = 0;
 let orgTouchMoved = false;
+let orgTouchLongPressTimer = null;
 
 function initOrgTouchDrag() {
     document.querySelectorAll('.org-node[data-org-dept]').forEach(node => {
@@ -1672,6 +1673,9 @@ function initOrgTouchDrag() {
 
 function orgTouchStart(e) {
     if (orgDragLocked) return;
+    // Clean up any previous drag state first
+    orgTouchCleanup();
+
     const node = e.currentTarget;
     const deptId = parseInt(node.dataset.orgDept);
     if (!deptId) return;
@@ -1683,14 +1687,17 @@ function orgTouchStart(e) {
     orgTouchStartY = touch.clientY;
 
     // Long press to start drag
-    node._longPressTimer = setTimeout(() => {
+    orgTouchLongPressTimer = setTimeout(() => {
+        orgTouchLongPressTimer = null;
         orgTouchMoved = true;
-        node.classList.add('dragging');
+        const currentNode = document.querySelector(`.org-node[data-org-dept="${deptId}"]`);
+        if (!currentNode) return;
+        currentNode.classList.add('dragging');
         document.getElementById('orgchart-container').classList.add('org-dragging');
 
         // Create floating clone
-        const rect = node.getBoundingClientRect();
-        orgTouchClone = node.cloneNode(true);
+        const rect = currentNode.getBoundingClientRect();
+        orgTouchClone = currentNode.cloneNode(true);
         Object.assign(orgTouchClone.style, {
             position: 'fixed', left: rect.left + 'px', top: rect.top + 'px',
             width: rect.width + 'px', zIndex: '999', pointerEvents: 'none',
@@ -1701,6 +1708,7 @@ function orgTouchStart(e) {
 
     document.addEventListener('touchmove', orgTouchMove, { passive: false });
     document.addEventListener('touchend', orgTouchEnd);
+    document.addEventListener('touchcancel', orgTouchCleanup);
 }
 
 function orgTouchMove(e) {
@@ -1710,8 +1718,7 @@ function orgTouchMove(e) {
 
     if (!orgTouchMoved && (dx > 10 || dy > 10)) {
         // Cancel long press if user scrolls
-        const node = document.querySelector(`.org-node[data-org-dept="${orgTouchDragId}"]`);
-        if (node && node._longPressTimer) clearTimeout(node._longPressTimer);
+        if (orgTouchLongPressTimer) { clearTimeout(orgTouchLongPressTimer); orgTouchLongPressTimer = null; }
         orgTouchCleanup();
         return;
     }
@@ -1737,8 +1744,7 @@ function orgTouchMove(e) {
 }
 
 function orgTouchEnd(e) {
-    const node = document.querySelector(`.org-node[data-org-dept="${orgTouchDragId}"]`);
-    if (node && node._longPressTimer) clearTimeout(node._longPressTimer);
+    if (orgTouchLongPressTimer) { clearTimeout(orgTouchLongPressTimer); orgTouchLongPressTimer = null; }
 
     if (orgTouchMoved && orgTouchDragId) {
         // Find what we're dropping on
@@ -1770,8 +1776,11 @@ function orgTouchEnd(e) {
                     if (dept) {
                         dept.parentId = targetParentId;
                         saveState();
+                        // Clean up BEFORE re-rendering to avoid ghost clones
+                        orgTouchCleanup();
                         renderOrgChart();
                         toast(`${dept.name} verplaatst`, 'success');
+                        return; // cleanup already done
                     }
                 }
             }
@@ -1782,6 +1791,7 @@ function orgTouchEnd(e) {
 }
 
 function orgTouchCleanup() {
+    if (orgTouchLongPressTimer) { clearTimeout(orgTouchLongPressTimer); orgTouchLongPressTimer = null; }
     if (orgTouchClone) { orgTouchClone.remove(); orgTouchClone = null; }
     document.querySelectorAll('.org-node.dragging').forEach(el => el.classList.remove('dragging'));
     document.querySelectorAll('.org-node.drag-over, .org-node-add.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -1793,6 +1803,7 @@ function orgTouchCleanup() {
     orgTouchMoved = false;
     document.removeEventListener('touchmove', orgTouchMove);
     document.removeEventListener('touchend', orgTouchEnd);
+    document.removeEventListener('touchcancel', orgTouchCleanup);
 }
 
 // ===== WELCOME SCREEN =====
