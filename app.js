@@ -750,9 +750,11 @@ document.addEventListener('click', dismissPillTooltip);
 
 // ===== BOTTOM SHEETS =====
 function openSheet(html) {
+    const sheet = document.getElementById('sheet');
     document.getElementById('sheet-content').innerHTML = html;
+    sheet.scrollTop = 0;
     document.getElementById('sheet-overlay').classList.add('show');
-    setTimeout(() => document.getElementById('sheet').classList.add('show'), 10);
+    setTimeout(() => sheet.classList.add('show'), 10);
 }
 
 function closeSheet() {
@@ -836,14 +838,15 @@ function saveEmployee(empId) {
 function deleteEmployee(empId) {
     const emp = state.employees.find(e => e.id === empId);
     if (!emp) return;
-    openSheet(`
+    document.getElementById('sheet-content').innerHTML = `
         <h2>${icon('trash', 20)} "${emp.name}" verwijderen?</h2>
         <p style="color:#666;margin-bottom:16px;">Deze medewerker en alle bijbehorende toewijzingen worden verwijderd.</p>
         <div class="btn-row">
             <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
             <button class="btn btn-danger" onclick="confirmDeleteEmployee(${empId})">Verwijderen</button>
         </div>
-    `);
+    `;
+    document.getElementById('sheet').scrollTop = 0;
 }
 
 function confirmDeleteEmployee(empId) {
@@ -977,7 +980,7 @@ function deleteDepartment(deptId) {
     const warning = childCount > 0
         ? `<p style="color:var(--accent);margin-bottom:12px;font-size:0.9em;">${icon('warning', 14)} ${childCount} onderliggende afdeling${childCount > 1 ? 'en' : ''} word${childCount > 1 ? 'en' : 't'} ook verwijderd.</p>`
         : '';
-    openSheet(`
+    document.getElementById('sheet-content').innerHTML = `
         <h2>${icon('trash', 20)} "${dept.name}" verwijderen?</h2>
         <p style="color:#666;margin-bottom:12px;">Deze afdeling en alle bijbehorende toewijzingen worden verwijderd.</p>
         ${warning}
@@ -985,7 +988,8 @@ function deleteDepartment(deptId) {
             <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
             <button class="btn btn-danger" onclick="confirmDeleteDepartment(${deptId})">Verwijderen</button>
         </div>
-    `);
+    `;
+    document.getElementById('sheet').scrollTop = 0;
 }
 
 function confirmDeleteDepartment(deptId) {

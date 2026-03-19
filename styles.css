@@ -674,6 +674,11 @@ body {
     justify-content: space-between;
     padding: 14px 0;
     border-bottom: 1px solid #eee;
+    gap: 12px;
+}
+
+.setting-row .btn {
+    flex-shrink: 0;
 }
 
 .setting-label { font-weight: 500; }
