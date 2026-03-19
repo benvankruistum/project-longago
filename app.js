@@ -835,7 +835,18 @@ function saveEmployee(empId) {
 
 function deleteEmployee(empId) {
     const emp = state.employees.find(e => e.id === empId);
-    if (!confirm(`"${emp.name}" verwijderen?`)) return;
+    if (!emp) return;
+    openSheet(`
+        <h2>${icon('trash', 20)} "${emp.name}" verwijderen?</h2>
+        <p style="color:#666;margin-bottom:16px;">Deze medewerker en alle bijbehorende toewijzingen worden verwijderd.</p>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-danger" onclick="confirmDeleteEmployee(${empId})">Verwijderen</button>
+        </div>
+    `);
+}
+
+function confirmDeleteEmployee(empId) {
     state.employees = state.employees.filter(e => e.id !== empId);
     state.allocations = state.allocations.filter(a => a.empId !== empId);
     closeSheet();
@@ -960,9 +971,27 @@ function saveDepartment(deptId) {
 
 function deleteDepartment(deptId) {
     const dept = state.departments.find(d => d.id === deptId);
-    if (!confirm(`"${dept.name}" verwijderen?`)) return;
-    state.departments = state.departments.filter(d => d.id !== deptId);
-    state.allocations = state.allocations.filter(a => a.deptId !== deptId);
+    if (!dept) return;
+    const descendantIds = getDescendantIds(deptId);
+    const childCount = descendantIds.length;
+    const warning = childCount > 0
+        ? `<p style="color:var(--accent);margin-bottom:12px;font-size:0.9em;">${icon('warning', 14)} ${childCount} onderliggende afdeling${childCount > 1 ? 'en' : ''} word${childCount > 1 ? 'en' : 't'} ook verwijderd.</p>`
+        : '';
+    openSheet(`
+        <h2>${icon('trash', 20)} "${dept.name}" verwijderen?</h2>
+        <p style="color:#666;margin-bottom:12px;">Deze afdeling en alle bijbehorende toewijzingen worden verwijderd.</p>
+        ${warning}
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="closeSheet()">Annuleren</button>
+            <button class="btn btn-danger" onclick="confirmDeleteDepartment(${deptId})">Verwijderen</button>
+        </div>
+    `);
+}
+
+function confirmDeleteDepartment(deptId) {
+    const allIds = [deptId, ...getDescendantIds(deptId)];
+    state.departments = state.departments.filter(d => !allIds.includes(d.id));
+    state.allocations = state.allocations.filter(a => !allIds.includes(a.deptId));
     closeSheet();
     saveState();
     renderAll();
