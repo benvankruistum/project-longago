@@ -774,7 +774,7 @@ body {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 100%;
-    padding-bottom: 80px;
+    padding: 12px 8px 80px;
 }
 
 .orgchart-tree {
@@ -797,7 +797,7 @@ body {
 .org-children {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 6px;
     position: relative;
     padding-top: 32px;
 }
@@ -824,6 +824,7 @@ body {
     right: calc(50% - var(--org-half-width, 0px));
 }
 
+.org-children > .org-branch:only-child > .org-node-wrapper > .org-node::before,
 .org-children > .org-branch:only-child > .org-node::before { display: none; }
 .org-children:has(> .org-branch:only-child)::after { display: none; }
 
@@ -834,6 +835,7 @@ body {
 }
 
 /* Vertical line from horizontal connector down to each child node */
+.org-branch > .org-node-wrapper > .org-node::before,
 .org-branch > .org-node::before {
     content: '';
     position: absolute;
@@ -845,6 +847,7 @@ body {
 }
 
 /* Vertical line from node down to its children */
+.org-branch:has(> .org-children) > .org-node-wrapper > .org-node::after,
 .org-branch:has(> .org-children) > .org-node::after {
     content: '';
     position: absolute;
@@ -860,11 +863,12 @@ body {
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    width: 100px;
+    min-width: 80px;
+    max-width: 120px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
     overflow: visible;
-    flex-shrink: 0;
+    flex-shrink: 1;
 }
 
 .org-node:active { transform: scale(0.96); }
@@ -918,9 +922,9 @@ body {
 .org-node-name {
     font-weight: 700;
     font-size: 0.68em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.2;
 }
 
 .org-node-meta {
@@ -999,7 +1003,8 @@ body {
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     border: 2px dashed #ccc;
-    width: 100px;
+    min-width: 80px;
+    max-width: 120px;
     cursor: pointer;
     transition: all 0.15s;
     overflow: hidden;
@@ -1268,19 +1273,19 @@ body {
 .org-node-wrapper {
     display: flex;
     align-items: flex-start;
-    gap: 4px;
+    gap: 2px;
     position: relative;
 }
 
 /* Plus buttons around org nodes */
 .org-plus-btn {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    border: 2px dashed #ccc;
-    background: white;
+    border: 1.5px dashed #999;
+    background: transparent;
     color: #999;
-    font-size: 1em;
+    font-size: 0.85em;
     font-weight: 700;
     cursor: pointer;
     display: flex;
@@ -1290,20 +1295,20 @@ body {
     transition: all 0.2s;
     padding: 0;
     line-height: 1;
-    opacity: 0.6;
+    opacity: 0.4;
 }
 .org-plus-btn:hover, .org-plus-btn:active {
     border-color: var(--accent2);
     color: var(--accent2);
-    background: rgba(52,152,219,0.08);
+    background: rgba(52,152,219,0.12);
     opacity: 1;
 }
 .org-plus-left, .org-plus-right {
-    margin-top: 24px;
+    margin-top: 20px;
 }
 .org-plus-below {
     display: block;
-    margin: 4px auto 0;
+    margin: 2px auto 0;
 }
 
 /* Org Picker (bottom sheet content) */
